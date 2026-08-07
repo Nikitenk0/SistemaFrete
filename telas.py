@@ -3,7 +3,7 @@ from tkinter import *
 
 from estilos import *
 
-from services.qualp import QualP
+from services.qualp.qualp import QualP
 
 class MenuPrincipal:
 
@@ -116,7 +116,11 @@ class MenuPrincipal:
         )
 
         self.txt_origem.pack(pady=5)
-
+        self.txt_origem.bind(
+            "<KeyRelease>",
+            self.validar_campos
+        )
+        
         ctk.CTkLabel(
             self.conteudo,
             text="Destino",
@@ -129,6 +133,10 @@ class MenuPrincipal:
         )
 
         self.txt_destino.pack(pady=5)
+        self.txt_destino.bind(
+            "<KeyRelease>",
+            self.validar_campos
+        )
 
         # Quantidade de eixos
         ctk.CTkLabel(
@@ -139,8 +147,9 @@ class MenuPrincipal:
 
         self.txt_eixos = ctk.CTkComboBox(
             self.conteudo,
-            values=[str(i) for i in range(2, 13)],
-            width=100
+            values=[str(i) for i in range(2, 10)],
+            width=100,
+            state="readonly"
         )
 
         self.txt_eixos.pack(pady=5)
@@ -161,11 +170,14 @@ class MenuPrincipal:
         self.switch_volta.pack(pady=10)
 
 
-        ctk.CTkButton(
+        self.btn_pesquisar = ctk.CTkButton(
             self.conteudo,
             text="Pesquisar",
-            command=self.pesquisar_orcamento
-        ).pack(pady=20)
+            command=self.pesquisar_orcamento,
+            state="disabled"
+        )
+        self.btn_pesquisar.pack(pady=20)
+
 
         # ==========================
         # Resultado da pesquisa
@@ -182,6 +194,30 @@ class MenuPrincipal:
         )
 
         self.lbl_distancia.pack(pady=(0, 10))
+
+        ctk.CTkLabel(
+            self.conteudo,
+            text="Pedágio"
+        ).pack()
+
+        self.lbl_pedagio = ctk.CTkLabel(
+            self.conteudo,
+            text="--"
+        )
+
+        self.lbl_pedagio.pack(pady=(0, 20))
+
+        ctk.CTkLabel(
+            self.conteudo,
+            text="Geral"
+        ).pack()
+
+        self.lbl_geral = ctk.CTkLabel(
+            self.conteudo,
+            text="--"
+        )
+
+        self.lbl_geral.pack(pady=(0, 20))
 
         
         ctk.CTkButton(
@@ -222,6 +258,20 @@ class MenuPrincipal:
             width=15
         ).pack(pady=30)
 
+        ############################################################################
+        # TESTE
+        ############################################################################
+    def validar_campos(self, event=None):
+
+        origem = self.txt_origem.get().strip()
+        destino = self.txt_destino.get().strip()
+
+        if origem and destino:
+            self.btn_pesquisar.configure(state="normal")
+        else:
+            self.btn_pesquisar.configure(state="disabled")
+
+
     def pesquisar_orcamento(self):
 
         origem = self.txt_origem.get()
@@ -240,6 +290,14 @@ class MenuPrincipal:
 
         self.lbl_distancia.configure(
             text=resultado["distancia"]
+        )
+
+        self.lbl_pedagio.configure(
+            text=resultado["pedagio"]
+        )
+
+        self.lbl_geral.configure(
+            text=resultado["geral"]
         )
 
         print(resultado)
