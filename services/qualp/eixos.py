@@ -19,6 +19,10 @@ class Eixos:
             )
         )
 
+        campo_eixos = controle_eixos.find_element(
+            *sel.CAMPO_EIXOS
+        )
+
         botoes = controle_eixos.find_elements(
             By.CLASS_NAME,
             "q-icon"
@@ -27,16 +31,35 @@ class Eixos:
         botao_diminuir = botoes[0]
         botao_aumentar = botoes[1]
 
-        eixos_atuais = 6
+        def obter_valor():
+            return int(
+                campo_eixos.get_attribute("value").split()[0]
+            )
+        
+        eixos_atuais = obter_valor()
 
         while eixos_atuais < quantidade_eixos:
+
+            valor_anterior = obter_valor()
+
             botao_aumentar.click()
-            eixos_atuais += 1
-            time.sleep(0.3)
+
+            wait.until(
+                lambda driver:
+                obter_valor() > valor_anterior
+            )
+
+            eixos_atuais = obter_valor()
 
         while eixos_atuais > quantidade_eixos:
+
+            valor_anterior = obter_valor()
+
             botao_diminuir.click()
-            eixos_atuais -= 1
-            time.sleep(0.3)
 
+            wait.until(
+                lambda driver:
+                obter_valor() < valor_anterior
+            )
 
+            eixos_atuais = obter_valor()

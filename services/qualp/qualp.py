@@ -1,7 +1,7 @@
 import time
 from selenium.webdriver.support.ui import WebDriverWait
 from services.navegador import Navegador
-from services.auth.login import Login
+from services.qualp.auth.login import Login
 from services.qualp.pesquisa import Pesquisa
 from services.qualp.resultados import Resultados
 
@@ -36,6 +36,4 @@ class QualP:
 
 
         finally:
-            time.sleep(5)
-            #input("Pressione ENTER para fechar o navegador...")
-            #driver.quit()
+            pass

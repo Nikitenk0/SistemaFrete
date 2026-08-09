@@ -42,6 +42,11 @@ CONTROLE_EIXOS = (
     "vehicle-control-axis"
 )
 
+CAMPO_EIXOS = (
+    By.CSS_SELECTOR,
+    ".vehicle-control-axis input"
+)
+
 BOTAO_CALCULAR = (
     By.XPATH,
     "//button[@type='submit']//span[contains(text(),'Calcular')]"

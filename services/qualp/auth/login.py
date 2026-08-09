@@ -10,7 +10,7 @@ class Login:
     @staticmethod
     def executar(driver, wait):
             
-            driver.get("https://qualp.com.br/#/")
+            driver.get(sel.URL)
 
             # Aguarda o pop-up aparecer e clica no botão de fechar
             try:
