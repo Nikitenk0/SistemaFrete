@@ -1,6 +1,6 @@
 from config.custos import obter_custo
 from config.estados import ESTADOS
-from config.mat_impostorctrc import MATRIZ_IMPOSTO
+from config.impostos.matriz_rctrc import MATRIZ_IMPOSTO
 
 
 # ==========================================================

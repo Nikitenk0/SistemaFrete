@@ -1,6 +1,5 @@
 import customtkinter as ctk
 from telas.menu_principal import MenuPrincipal
-from services.qualp.qualp import QualP
 
 
 ctk.set_appearance_mode("light")     # ou "dark"

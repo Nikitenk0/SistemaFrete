@@ -1,12 +1,9 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+
 from selenium.webdriver.support import expected_conditions as EC
 from services.qualp.origem_destino import OrigemDestino
 from services.qualp.eixos import Eixos
 from services.qualp.volta import calcVolta
 import services.qualp.seletores as sel
-import time
-
 
 class Pesquisa:
 
@@ -29,15 +26,6 @@ class Pesquisa:
             driver,
             destino
         )
-        origem_selecionada = OrigemDestino.obter_origem(
-            driver
-        )
-
-        destino_selecionado = OrigemDestino.obter_destino(
-            driver
-        )
-        print("Origem selecionada pelo QualP:", origem_selecionada)
-        print("Destino selecionado pelo QualP:", destino_selecionado)
 
         # ========================================== # Continua o processo normalmente # ==========================================
 

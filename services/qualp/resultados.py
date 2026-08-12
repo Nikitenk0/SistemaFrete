@@ -15,8 +15,6 @@ class Resultados:
             driver
             )
 
-        print( "Origem selecionada pelo QualP:", origem_selecionada )
-        print( "Destino selecionado pelo QualP:", destino_selecionado )
         wait.until(
             EC.visibility_of_element_located(
                 sel.TABELA_ROTAS

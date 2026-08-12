@@ -1,4 +1,3 @@
-import time
 from selenium.webdriver.support.ui import WebDriverWait
 from services.navegador import Navegador
 from services.qualp.auth.login import Login
@@ -26,7 +25,7 @@ class QualP:
         
         try:
 
-            localizacoes = Pesquisa.executar(
+            Pesquisa.executar(
                 driver,
                 wait,
                 origem,

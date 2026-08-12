@@ -1,6 +1,6 @@
 import customtkinter as ctk
-from tkinter import *
-from tkinter import messagebox, filedialog
+
+from tkinter import messagebox, filedialog, LEFT, RIGHT, BOTH, Y, X
 from telas.estilos import *
 from services.qualp.qualp import QualP
 from telas.tela_orcamento_fechada import TelaOrcamentoFechada
@@ -68,19 +68,7 @@ class MenuPrincipal:
             padx=10
         )
 
-        def mostrar_submenu_orcamento(self):
 
-            if self.submenu_orcamento.winfo_ismapped():
-
-                self.submenu_orcamento.pack_forget()
-
-            else:
-
-                self.submenu_orcamento.pack(
-                    fill=X,
-                    padx=0,
-                    pady=(0, 5)
-                )
 
         # ==========================
         # SUBMENU ORÇAMENTO
