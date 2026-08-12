@@ -44,3 +44,19 @@ class OrigemDestino:
         input_destino.send_keys(Keys.ENTER)
 
         time.sleep(2)
+
+    @staticmethod
+
+    def obter_origem(driver):
+        input_origem = driver.find_element(
+         *sel.CAMPO_ORIGEM
+          )
+        return input_origem.get_attribute("value")
+
+    @staticmethod
+
+    def obter_destino(driver):
+         input_destino = driver.find_element(
+              *sel.CAMPO_DESTINO
+               )
+         return input_destino.get_attribute("value")

@@ -29,6 +29,17 @@ class Pesquisa:
             driver,
             destino
         )
+        origem_selecionada = OrigemDestino.obter_origem(
+            driver
+        )
+
+        destino_selecionado = OrigemDestino.obter_destino(
+            driver
+        )
+        print("Origem selecionada pelo QualP:", origem_selecionada)
+        print("Destino selecionado pelo QualP:", destino_selecionado)
+
+        # ========================================== # Continua o processo normalmente # ==========================================
 
         Eixos.definir_eixos(
             wait,

@@ -80,3 +80,5 @@ GERAL = (
     By.XPATH,
     "//td[normalize-space()='Geral']/following-sibling::td"
 )
+
+

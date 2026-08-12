@@ -1,0 +1,17 @@
+from config.estados import ESTADOS
+from config.mat_impostorctrc import MATRIZ_IMPOSTO
+
+
+class Impostos:
+
+    @staticmethod
+    def obter_aliquota(origem, destino):
+
+        codigo_origem = ESTADOS[origem]
+        codigo_destino = ESTADOS[destino]
+
+        return MATRIZ_IMPOSTO[
+            codigo_origem - 1
+        ][
+            codigo_destino - 1
+        ]

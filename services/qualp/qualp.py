@@ -16,11 +16,17 @@ class QualP:
         ):
 
         driver = Navegador.iniciar()
+
         wait = WebDriverWait(driver, 15)
-        Login.executar(driver, wait)
+
+        Login.executar(
+            driver,
+            wait
+            )
+        
         try:
 
-            Pesquisa.executar(
+            localizacoes = Pesquisa.executar(
                 driver,
                 wait,
                 origem,
@@ -29,11 +35,12 @@ class QualP:
                 calcular_volta
             )
 
-            return Resultados.obter(
+            resultado = Resultados.obter(
                 driver,
                 wait
             )
 
+            return resultado
 
         finally:
             pass

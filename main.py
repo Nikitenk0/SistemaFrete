@@ -1,5 +1,5 @@
 import customtkinter as ctk
-from telas import MenuPrincipal
+from telas.menu_principal import MenuPrincipal
 from services.qualp.qualp import QualP
 
 
