@@ -7,7 +7,7 @@ from telas.estilos import (
 )
 
 
-class TelaOrcamentoComplemento:
+class TelaDocumentos:
 
     def __init__(
         self,
@@ -23,7 +23,7 @@ class TelaOrcamentoComplemento:
 
         ctk.CTkLabel(
             self.parent,
-            text="COMPLEMENTO",
+            text="DOCUMENTOS",
             font=("Arial", 22, "bold"),
             fg_color=COR_FUNDO
         ).pack(
@@ -32,11 +32,9 @@ class TelaOrcamentoComplemento:
 
         ctk.CTkLabel(
             self.parent,
-            text="Tela de complemento em desenvolvimento.",
+            text="Aqui ficarão os documentos.",
             fg_color=COR_FUNDO
-        ).pack(
-            pady=10
-        )
+        ).pack()
 
         ctk.CTkButton(
             self.parent,
@@ -49,3 +47,4 @@ class TelaOrcamentoComplemento:
         ).pack(
             pady=30
         )
+        

@@ -1,27 +1,26 @@
 import customtkinter as ctk
-from domain.models.resultado_orcamento import ResultadoOrcamento
-from domain.models.resultado_rota import ResultadoRota
-from tkinter import messagebox, filedialog, LEFT, RIGHT, BOTH, Y, X
+
+from tkinter import LEFT, RIGHT, BOTH, Y, X
+
 from telas.estilos import *
-from services.qualp.qualp import QualP
 from telas.tela_orcamento_fechada import TelaOrcamentoFechada
-from utils.gerador_pdf import gerar_orcamento_pdf
-from application.use_cases.calcular_orcamento_fechado import CalcularOrcamentoFechado
+from telas.tela_documentos import TelaDocumentos
+from telas.tela_orcamento_complemento import TelaOrcamentoComplemento
+
 
 
 class MenuPrincipal:
 
-    def __init__(self, master):
-
+    def __init__(
+        self,
+        master,
+        orcamento_callback,
+        pdf_callback
+    ):
         self.master = master
-        
-        self.qualp = QualP()
+        self.orcamento_callback = orcamento_callback
+        self.pdf_callback = pdf_callback
 
-        self.calcular_orcamento_fechado = (
-            CalcularOrcamentoFechado(
-                pesquisar_rota=self.qualp.pesquisar
-            )
-        )
         self.master.title("Sistema")
         self.master.geometry(f"{LARGURA_JANELA}x{ALTURA_JANELA}")
         self.master.configure(fg_color=COR_FUNDO)
@@ -179,117 +178,30 @@ class MenuPrincipal:
 
         self.tela_orcamento_atual = TelaOrcamentoFechada(
             self.conteudo,
-            orcamento_callback=(
-                self.calcular_orcamento_fechado.executar
-            ),
-            pdf_callback=self.gerar_pdf,
+            orcamento_callback=self.orcamento_callback,
+            pdf_callback=self.pdf_callback,
             voltar_callback=self.tela_inicial
         )
 
     def tela_complemento(self):
 
-        # Fecha o submenu
         self.submenu_orcamento.place_forget()
 
         self.limpar_conteudo()
 
-        ctk.CTkLabel(
-            self.conteudo,
-            text="COMPLEMENTO",
-            font=("Arial", 22, "bold"),
-            fg_color=COR_FUNDO
-        ).pack(
-            pady=30
+        self.tela_complemento_atual = (
+            TelaOrcamentoComplemento(
+                parent=self.conteudo,
+                voltar_callback=self.tela_inicial
+            )
         )
-
-        ctk.CTkLabel(
-            self.conteudo,
-            text="Tela de complemento em desenvolvimento.",
-            fg_color=COR_FUNDO
-        ).pack(
-            pady=10
-        )
-
     def tela_documentos(self):
 
-        # Fecha o submenu
         self.submenu_orcamento.place_forget()
-
 
         self.limpar_conteudo()
 
-        ctk.CTkLabel(
-            self.conteudo,
-            text="DOCUMENTOS",
-            font=("Arial",22,"bold"),
-            fg_color=COR_FUNDO
-        ).pack(pady=30)
-
-        ctk.CTkLabel(
-            self.conteudo,
-            text="Aqui ficarão os documentos.",
-            fg_color=COR_FUNDO
-        ).pack()
-
-        ctk.CTkButton(
-            self.conteudo,
-            text="← Voltar",
-            command=self.tela_inicial,
-            fg_color=COR_BOTAO,
-            text_color="white",
-            font=FONTE_BOTAO,
-            width=15
-        ).pack(pady=30)
-
-
-    def gerar_pdf(
-                self,
-                resultado_rota: ResultadoRota,
-                 resultado_orcamento: ResultadoOrcamento,
-                 quantidade_eixos: int,
-                calcular_volta: bool
-                ):
-
-
-        # ==========================================================
-        # ESCOLHER ONDE SALVAR
-        # ==========================================================
-
-        caminho = filedialog.asksaveasfilename(
-            title="Salvar orçamento",
-            defaultextension=".pdf",
-            filetypes=[
-                ("Arquivo PDF", "*.pdf")
-            ],
-            initialfile="orcamento.pdf"
+        self.tela_documentos_atual = TelaDocumentos(
+            parent=self.conteudo,
+            voltar_callback=self.tela_inicial
         )
-
-        # Usuário cancelou
-        if not caminho:
-            return
-
-        # ==========================================================
-        # GERA O PDF
-        # ==========================================================
-
-        try:
-
-            gerar_orcamento_pdf(
-                resultado_rota=resultado_rota,
-                resultado_orcamento=resultado_orcamento,
-                quantidade_eixos=quantidade_eixos,
-                calcular_volta=calcular_volta,
-                caminho=caminho
-            )
-
-            messagebox.showinfo(
-                "Sucesso",
-                "Orçamento gerado com sucesso!"
-            )
-
-        except Exception as erro:
-
-            messagebox.showerror(
-                "Erro",
-                f"Não foi possível gerar o PDF.\n\n{erro}"
-            )
