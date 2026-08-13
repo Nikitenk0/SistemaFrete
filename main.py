@@ -6,7 +6,9 @@ from application.use_cases.calcular_orcamento_fechado import (
 from services.qualp.qualp import QualP
 from telas.menu_principal import MenuPrincipal
 from telas.services.orcamento_pdf import OrcamentoPdfService
-
+from utils.gerador_pdf import (
+    GeradorOrcamentoPdfReportLab
+)
 
 def criar_aplicacao():
 
@@ -19,11 +21,17 @@ def criar_aplicacao():
 
     calcular_orcamento_fechado = (
         CalcularOrcamentoFechado(
-            pesquisar_rota=qualp.pesquisar
+            pesquisador_rota=qualp
         )
     )
 
-    orcamento_pdf_service = OrcamentoPdfService()
+    gerador_orcamento_pdf = (
+        GeradorOrcamentoPdfReportLab()
+    )
+
+    orcamento_pdf_service = OrcamentoPdfService(
+        gerador_pdf=gerador_orcamento_pdf
+    )
 
     MenuPrincipal(
         master=janela,

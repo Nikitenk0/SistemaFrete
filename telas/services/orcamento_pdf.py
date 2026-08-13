@@ -1,11 +1,19 @@
 from tkinter import filedialog, messagebox
 
+from application.ports.gerador_orcamento_pdf import (
+    GeradorOrcamentoPdf
+)
 from domain.models.resultado_orcamento import ResultadoOrcamento
 from domain.models.resultado_rota import ResultadoRota
-from utils.gerador_pdf import gerar_orcamento_pdf
 
 
 class OrcamentoPdfService:
+
+    def __init__(
+        self,
+        gerador_pdf: GeradorOrcamentoPdf
+    ):
+        self._gerador_pdf = gerador_pdf
 
     def gerar(
         self,
@@ -29,7 +37,7 @@ class OrcamentoPdfService:
 
         try:
 
-            gerar_orcamento_pdf(
+            self._gerador_pdf.gerar(
                 resultado_rota=resultado_rota,
                 resultado_orcamento=resultado_orcamento,
                 quantidade_eixos=quantidade_eixos,

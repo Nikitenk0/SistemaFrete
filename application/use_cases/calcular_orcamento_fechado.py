@@ -1,8 +1,7 @@
-from collections.abc import Callable
-
 from application.dtos.resultado_orcamento_fechado import (
     ResultadoOrcamentoFechado
 )
+from application.ports.pesquisador_rota import PesquisadorRota
 from application.exceptions import (
     DadosOrcamentoInvalidos,
     FalhaCalculoOrcamento,
@@ -14,19 +13,13 @@ from domain.models.resultado_rota import ResultadoRota
 from utils.conversao_monetaria import converter_valor_monetario
 
 
-PesquisarRota = Callable[
-    [str, str, int, bool],
-    ResultadoRota | None
-]
-
-
 class CalcularOrcamentoFechado:
 
     def __init__(
         self,
-        pesquisar_rota: PesquisarRota
+        pesquisador_rota: PesquisadorRota
     ):
-        self._pesquisar_rota = pesquisar_rota
+        self._pesquisador_rota = pesquisador_rota
 
     def executar(
         self,
@@ -48,7 +41,7 @@ class CalcularOrcamentoFechado:
             ) from erro
 
         try:
-            resultado_rota = self._pesquisar_rota(
+            resultado_rota = self._pesquisador_rota.pesquisar(
                 origem,
                 destino,
                 quantidade_eixos,

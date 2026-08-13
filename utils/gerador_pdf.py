@@ -257,3 +257,22 @@ def formatar_moeda(valor: float) -> str:
     )
 
     return f"R$ {valor_formatado}"
+
+class GeradorOrcamentoPdfReportLab:
+
+    def gerar(
+        self,
+        resultado_rota: ResultadoRota,
+        resultado_orcamento: ResultadoOrcamento,
+        quantidade_eixos: int,
+        calcular_volta: bool,
+        caminho: str
+    ) -> None:
+
+        gerar_orcamento_pdf(
+            resultado_rota=resultado_rota,
+            resultado_orcamento=resultado_orcamento,
+            quantidade_eixos=quantidade_eixos,
+            calcular_volta=calcular_volta,
+            caminho=caminho
+        )
