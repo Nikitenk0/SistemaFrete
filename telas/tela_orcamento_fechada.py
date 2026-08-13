@@ -1,23 +1,27 @@
 import customtkinter as ctk
 from domain.models.resultado_rota import ResultadoRota
 from domain.models.resultado_orcamento import ResultadoOrcamento
-from utils.calc_orcamento import calcular_orcamento
 from utils.conversao_monetaria import converter_valor_monetario
-
+from application.exceptions import (
+        DadosOrcamentoInvalidos,
+        FalhaCalculoOrcamento,
+        FalhaPesquisaRota,
+        RotaNaoEncontrada,
+    )
 
 class TelaOrcamentoFechada:
 
     def __init__(
         self,
         parent,
-        pesquisar_callback,
+        orcamento_callback,
         pdf_callback,
         voltar_callback
     ):
         self.resultado_rota_atual: ResultadoRota | None = None
         self.resultado_orcamento_atual: ResultadoOrcamento | None = None
         self.parent = parent
-        self.pesquisar_callback = pesquisar_callback
+        self.orcamento_callback = orcamento_callback
         self.pdf_callback = pdf_callback
         self.voltar_callback = voltar_callback
 
@@ -559,119 +563,91 @@ class TelaOrcamentoFechada:
         calcular_volta = self.var_calcular_volta.get()
 
         # ======================================================
-        # CONVERTE VALOR DA NOTA
+        # EXECUTA O CASO DE USO
         # ======================================================
-
         try:
 
-            valor_nota = converter_valor_monetario(
-                valor_nota
+            resultado = self.orcamento_callback(
+                valor_nota=valor_nota,
+                origem=origem,
+                destino=destino,
+                quantidade_eixos=eixos,
+                calcular_volta=calcular_volta
             )
 
-        except ValueError:
+        except DadosOrcamentoInvalidos:
 
             self.lbl_total.configure(
-                text="Valor de nota inválido"
+                text="Dados do orçamento inválidos"
             )
 
             self.validar_campos()
 
             return
 
-        # ======================================================
-        # PESQUISA QUALP
-        # ======================================================
-
-        try:
-
-            resultado = self.pesquisar_callback(
-                origem,
-                destino,
-                eixos,
-                calcular_volta
-            )
-
-        except Exception as erro:
+        except RotaNaoEncontrada:
 
             self.lbl_total.configure(
-                text=f"Erro na pesquisar rota no QualP"
+                text="Nenhuma rota encontrada"
             )
 
             self.validar_campos()
 
             return
 
-        if not resultado:
+        except FalhaPesquisaRota:
 
             self.lbl_total.configure(
-                text="Nenhum resultado encontrado"
+                text="Erro ao pesquisar rota"
             )
 
             self.validar_campos()
 
             return
+
+        except FalhaCalculoOrcamento:
+
+            self.lbl_total.configure(
+                text="Erro ao calcular orçamento"
+            )
+
+            self.validar_campos()
+
+            return
+
         
-        self.resultado_rota_atual = resultado
+        resultado_rota = resultado.rota
+        resultado_orcamento = resultado.orcamento
+
+        self.resultado_rota_atual = resultado_rota
+        self.resultado_orcamento_atual = resultado_orcamento
         # ======================================================
-        # ATUALIZA RESULTADOS DO QUALP
+        # ATUALIZA RESULTADOS DA ROTA
         # ======================================================
 
         self.lbl_origem.configure(
-            text=resultado.origem
+            text=resultado_rota.origem
         )
 
         self.lbl_destino.configure(
-            text=resultado.destino
+            text=resultado_rota.destino
         )
 
         self.lbl_distancia.configure(
-            text=resultado.distancia
+            text=resultado_rota.distancia
         )
 
         self.lbl_pedagio.configure(
             text=self.formatar_valor_resultado(
-                resultado.pedagio
+                resultado_rota.pedagio
             )
         )
 
         self.lbl_geral.configure(
             text=self.formatar_valor_resultado(
-                resultado.geral
+                resultado_rota.geral
             )
         )
-
-        # ======================================================
-        # VALORES PARA O CÁLCULO
-        # ======================================================
-
-        geral = resultado.geral
-        pedagio = resultado.pedagio
-
-        # ======================================================
-        # CALCULA ORÇAMENTO
-        # ======================================================
-
-        try:
-
-            calculo = calcular_orcamento(
-                valor_nota=valor_nota,
-                geral=geral,
-                pedagio=pedagio,
-                estado_origem=resultado.origem,
-                estado_destino=resultado.destino
-            )
-
-        except Exception as erro:
-
-            self.lbl_total.configure(
-                text=f"Erro no cálculo: {erro}"
-            )
-
-            self.validar_campos()
-
-            return
-        
-        self.resultado_orcamento_atual = calculo
 
         # ======================================================
         # ATUALIZA CUSTO
@@ -679,7 +655,7 @@ class TelaOrcamentoFechada:
 
         self.lbl_custo.configure(
             text=self.formatar_moeda(
-                calculo.custo
+                resultado_orcamento.custo
             )
         )
 
@@ -689,7 +665,7 @@ class TelaOrcamentoFechada:
 
         self.lbl_imposto.configure(
             text=self.formatar_moeda(
-                calculo.total_impostos
+                resultado_orcamento.total_impostos
             )
         )
 
@@ -699,7 +675,7 @@ class TelaOrcamentoFechada:
 
         self.lbl_total.configure(
             text=self.formatar_moeda(
-                calculo.total
+                resultado_orcamento.total
             )
         )
 

@@ -8,8 +8,8 @@ def calcular_orcamento(
     valor_nota: float,
     geral: float,
     pedagio: float,
-    estado_origem: str,
-    estado_destino: str
+    localizacao_origem: str,
+    localizacao_destino: str
 ) -> ResultadoOrcamento:
 
     custo = calcular_custo(
@@ -17,9 +17,9 @@ def calcular_orcamento(
     )
 
     aliquota_rctrc = obter_aliquota_rctrc(
-        estado_origem,
-        estado_destino
-    )
+        localizacao_origem,
+        localizacao_destino
+        )
 
     subtotal = (
         geral

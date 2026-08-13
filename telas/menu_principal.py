@@ -6,6 +6,7 @@ from telas.estilos import *
 from services.qualp.qualp import QualP
 from telas.tela_orcamento_fechada import TelaOrcamentoFechada
 from utils.gerador_pdf import gerar_orcamento_pdf
+from application.use_cases.calcular_orcamento_fechado import CalcularOrcamentoFechado
 
 
 class MenuPrincipal:
@@ -13,7 +14,14 @@ class MenuPrincipal:
     def __init__(self, master):
 
         self.master = master
+        
+        self.qualp = QualP()
 
+        self.calcular_orcamento_fechado = (
+            CalcularOrcamentoFechado(
+                pesquisar_rota=self.qualp.pesquisar
+            )
+        )
         self.master.title("Sistema")
         self.master.geometry(f"{LARGURA_JANELA}x{ALTURA_JANELA}")
         self.master.configure(fg_color=COR_FUNDO)
@@ -171,10 +179,13 @@ class MenuPrincipal:
 
         self.tela_orcamento_atual = TelaOrcamentoFechada(
             self.conteudo,
-            pesquisar_callback=self.pesquisar_orcamento,
+            orcamento_callback=(
+                self.calcular_orcamento_fechado.executar
+            ),
             pdf_callback=self.gerar_pdf,
             voltar_callback=self.tela_inicial
         )
+
     def tela_complemento(self):
 
         # Fecha o submenu
@@ -229,29 +240,6 @@ class MenuPrincipal:
             font=FONTE_BOTAO,
             width=15
         ).pack(pady=30)
-
-        ############################################################################
-        # TESTE
-        ############################################################################
-    def pesquisar_orcamento(
-        self,
-        origem,
-        destino,
-        eixos,
-        calcular_volta
-    ):
-
-        robo = QualP()
-
-        resultado = robo.pesquisar(
-            origem,
-            destino,
-            eixos,
-            calcular_volta
-        )
-
-        return resultado
-
 
 
     def gerar_pdf(
