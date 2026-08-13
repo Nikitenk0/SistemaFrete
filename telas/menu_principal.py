@@ -1,5 +1,6 @@
 import customtkinter as ctk
-
+from domain.models.resultado_orcamento import ResultadoOrcamento
+from domain.models.resultado_rota import ResultadoRota
 from tkinter import messagebox, filedialog, LEFT, RIGHT, BOTH, Y, X
 from telas.estilos import *
 from services.qualp.qualp import QualP
@@ -253,23 +254,14 @@ class MenuPrincipal:
 
 
 
-    def gerar_pdf(self, dados):
+    def gerar_pdf(
+                self,
+                resultado_rota: ResultadoRota,
+                 resultado_orcamento: ResultadoOrcamento,
+                 quantidade_eixos: int,
+                calcular_volta: bool
+                ):
 
-        # ==========================================================
-        # VERIFICA SE EXISTE UM ORÇAMENTO
-        # ==========================================================
-
-        if (
-            dados["origem"] == "--"
-            or dados["destino"] == "--"
-        ):
-
-            messagebox.showwarning(
-                "Atenção",
-                "Realize uma pesquisa antes de gerar o PDF."
-            )
-
-            return
 
         # ==========================================================
         # ESCOLHER ONDE SALVAR
@@ -295,8 +287,11 @@ class MenuPrincipal:
         try:
 
             gerar_orcamento_pdf(
-                dados,
-                caminho
+                resultado_rota=resultado_rota,
+                resultado_orcamento=resultado_orcamento,
+                quantidade_eixos=quantidade_eixos,
+                calcular_volta=calcular_volta,
+                caminho=caminho
             )
 
             messagebox.showinfo(

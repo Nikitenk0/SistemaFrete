@@ -1,16 +1,24 @@
+from datetime import datetime
+
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
-from datetime import datetime
 
+from domain.models.resultado_orcamento import ResultadoOrcamento
+from domain.models.resultado_rota import ResultadoRota
 
-def gerar_orcamento_pdf(dados, caminho):
+def gerar_orcamento_pdf(
+        resultado_rota: ResultadoRota,
+        resultado_orcamento: ResultadoOrcamento,
+        quantidade_eixos: int,
+        calcular_volta: bool,
+        caminho: str
+    ):
     """
-    Gera um PDF com os dados do orçamento.
 
-    Parâmetros:
-        dados: dicionário contendo os dados do orçamento.
-        caminho: caminho onde o PDF será salvo.
+        Gera o PDF de um orçamento a partir dos resultados
+        da rota e do cálculo financeiro.
+
     """
 
     pdf = canvas.Canvas(
@@ -64,126 +72,155 @@ def gerar_orcamento_pdf(dados, caminho):
         largura - 2 * cm,
         altura - 4.5 * cm
     )
-
     # ==========================================================
     # DADOS DO ORÇAMENTO
     # ==========================================================
 
     y = altura - 6 * cm
 
-    # ---------- Origem ----------
+    x_rotulo = 3 * cm
+    x_valor = 7 * cm
 
-    pdf.setFont(
-        "Helvetica-Bold",
-        12
-    )
+    espacamento = 0.9 * cm
 
-    pdf.drawString(
-        3 * cm,
-        y,
-        "Origem:"
-    )
 
-    pdf.setFont(
-        "Helvetica",
-        12
-    )
+    def desenhar_linha(
+        rotulo,
+        valor,
+        fonte_rotulo="Helvetica-Bold",
+        fonte_valor="Helvetica",
+        tamanho=12
+    ):
+        nonlocal y
 
-    pdf.drawString(
-        7 * cm,
-        y,
-        dados["origem"]
-    )
+        pdf.setFont(
+            fonte_rotulo,
+            tamanho
+        )
 
-    # ---------- Destino ----------
+        pdf.drawString(
+            x_rotulo,
+            y,
+            rotulo
+        )
 
-    y -= 1 * cm
+        pdf.setFont(
+            fonte_valor,
+            tamanho
+        )
 
-    pdf.setFont(
-        "Helvetica-Bold",
-        12
-    )
+        pdf.drawString(
+            x_valor,
+            y,
+            str(valor)
+        )
 
-    pdf.drawString(
-        3 * cm,
-        y,
-        "Destino:"
-    )
+        y -= espacamento
 
-    pdf.setFont(
-        "Helvetica",
-        12
-    )
-
-    pdf.drawString(
-        7 * cm,
-        y,
-        dados["destino"]
-    )
-
-    # ---------- Distância ----------
-
-    y -= 1 * cm
-
-    pdf.setFont(
-        "Helvetica-Bold",
-        12
-    )
-
-    pdf.drawString(
-        3 * cm,
-        y,
-        "Distância:"
-    )
-
-    pdf.setFont(
-        "Helvetica",
-        12
-    )
-
-    pdf.drawString(
-        7 * cm,
-        y,
-        dados["distancia"]
-    )
-
-    # ---------- Pedágio ----------
-
-    y -= 1 * cm
-
-    pdf.setFont(
-        "Helvetica-Bold",
-        12
-    )
-
-    pdf.drawString(
-        3 * cm,
-        y,
-        "Pedágio:"
-    )
-
-    pdf.setFont(
-        "Helvetica",
-        12
-    )
-
-    pdf.drawString(
-        7 * cm,
-        y,
-        dados["pedagio"]
-    )
 
     # ==========================================================
-    # VALOR GERAL
+    # DADOS DA ROTA
     # ==========================================================
 
-    y -= 2 * cm
+    desenhar_linha(
+        "Origem:",
+        resultado_rota.origem
+    )
+
+    desenhar_linha(
+        "Destino:",
+        resultado_rota.destino
+    )
+
+    desenhar_linha(
+        "Distância:",
+        resultado_rota.distancia
+    )
+
+    desenhar_linha(
+        "Pedágio:",
+        formatar_moeda(
+            resultado_orcamento.pedagio
+        )
+    )
+
+    desenhar_linha(
+        "Quantidade de Eixos:",
+        quantidade_eixos
+    )
+
+    texto_calcular_volta = (
+        "Sim"
+        if calcular_volta
+        else "Não"
+    )
+
+    desenhar_linha(
+        "Calcular Volta:",
+        texto_calcular_volta
+    )
+
+
+    # ==========================================================
+    # DADOS FINANCEIROS
+    # ==========================================================
+
+    y -= 0.5 * cm
 
     pdf.line(
-        3 * cm,
-        y + 0.5 * cm,
+        x_rotulo,
+        y + 0.3 * cm,
         largura - 3 * cm,
-        y + 0.5 * cm
+        y + 0.3 * cm
+    )
+
+    desenhar_linha(
+        "Valor da Nota:",
+        formatar_moeda(
+            resultado_orcamento.valor_nota
+        )
+    )
+
+    desenhar_linha(
+        "Geral:",
+        formatar_moeda(
+            resultado_orcamento.geral
+        )
+    )
+
+    desenhar_linha(
+        "Custo:",
+        formatar_moeda(
+            resultado_orcamento.custo
+        )
+    )
+
+
+    # ==========================================================
+    # IMPOSTOS
+    # ==========================================================
+
+    for imposto in resultado_orcamento.impostos:
+
+        desenhar_linha(
+            f"{imposto.nome}:",
+            formatar_moeda(
+                imposto.valor
+            )
+        )
+
+
+    # ==========================================================
+    # TOTAL
+    # ==========================================================
+
+    y -= 0.5 * cm
+
+    pdf.line(
+        x_rotulo,
+        y + 0.3 * cm,
+        largura - 3 * cm,
+        y + 0.3 * cm
     )
 
     pdf.setFont(
@@ -192,19 +229,31 @@ def gerar_orcamento_pdf(dados, caminho):
     )
 
     pdf.drawString(
-        3 * cm,
+        x_rotulo,
         y,
-        "VALOR GERAL:"
+        "TOTAL:"
     )
 
     pdf.drawString(
-        7 * cm,
+        x_valor,
         y,
-        dados["geral"]
+        formatar_moeda(
+            resultado_orcamento.total
+        )
     )
-
     # ==========================================================
     # FINALIZA
     # ==========================================================
 
     pdf.save()
+
+def formatar_moeda(valor: float) -> str:
+
+    valor_formatado = (
+        f"{valor:,.2f}"
+        .replace(",", "X")
+        .replace(".", ",")
+        .replace("X", ".")
+    )
+
+    return f"R$ {valor_formatado}"

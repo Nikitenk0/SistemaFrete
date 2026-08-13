@@ -1,9 +1,9 @@
 from selenium.webdriver.support.ui import WebDriverWait
-from services.navegador import Navegador
+from services.qualp.navegador import Navegador
 from services.qualp.auth.login import Login
 from services.qualp.pesquisa import Pesquisa
 from services.qualp.resultados import Resultados
-
+from domain.models.resultado_rota import ResultadoRota
 class QualP:
 
     def pesquisar(
@@ -12,7 +12,7 @@ class QualP:
             destino,
             quantidade_eixos=6,
             calcular_volta=False
-        ):
+        ) -> ResultadoRota:
 
         driver = Navegador.iniciar()
 

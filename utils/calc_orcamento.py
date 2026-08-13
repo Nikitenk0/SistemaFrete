@@ -1,6 +1,8 @@
 from config.custos import obter_custo
 from config.estados import ESTADOS
 from config.impostos.matriz_rctrc import MATRIZ_IMPOSTO
+from domain.models.imposto_calculado import ImpostoCalculado
+from domain.models.resultado_orcamento import ResultadoOrcamento
 
 
 # ==========================================================
@@ -193,7 +195,7 @@ def calcular_orcamento(
     pedagio,
     estado_origem,
     estado_destino
-):
+) -> ResultadoOrcamento:
     """
     Calcula o orçamento completo.
 
@@ -269,6 +271,17 @@ def calcular_orcamento(
     )
 
     # ======================================================
+    # CRIA O OBJETO DO RCTRC
+    # ======================================================
+
+    imposto_rctrc = ImpostoCalculado(
+    nome="RCTRC",
+    aliquota=percentual_imposto,
+    base_calculo=base_imposto,
+    valor=valor_imposto
+    )
+
+    # ======================================================
     # TOTAL
     # ======================================================
 
@@ -281,15 +294,14 @@ def calcular_orcamento(
     # RETORNO
     # ======================================================
 
-    return {
-        "valor_nota": valor_nota,
-        "geral": geral,
-        "pedagio": pedagio,
-        "custo": custo,
-        "estado_origem": estado_origem,
-        "estado_destino": estado_destino,
-        "percentual_imposto": percentual_imposto,
-        "base_imposto": base_imposto,
-        "valor_imposto": valor_imposto,
-        "total": total
-    }
+    return ResultadoOrcamento(
+        valor_nota=valor_nota,
+        geral=geral,
+        pedagio=pedagio,
+        custo=custo,
+        subtotal=base_imposto,
+        impostos=(
+            imposto_rctrc,
+        ),
+        total=total
+    )

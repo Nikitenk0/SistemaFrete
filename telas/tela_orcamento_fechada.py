@@ -1,5 +1,6 @@
 import customtkinter as ctk
-
+from domain.models.resultado_rota import ResultadoRota
+from domain.models.resultado_orcamento import ResultadoOrcamento
 from utils.calc_orcamento import calcular_orcamento
 
 
@@ -12,8 +13,9 @@ class TelaOrcamentoFechada:
         pdf_callback,
         voltar_callback
     ):
+        self.resultado_rota_atual: ResultadoRota | None = None
+        self.resultado_orcamento_atual: ResultadoOrcamento | None = None
         self.parent = parent
-
         self.pesquisar_callback = pesquisar_callback
         self.pdf_callback = pdf_callback
         self.voltar_callback = voltar_callback
@@ -527,12 +529,9 @@ class TelaOrcamentoFechada:
 
     def pesquisar(self):
 
+        self.limpar_resultados()
         # Desabilita temporariamente para evitar múltiplos cliques.
         self.btn_pesquisar.configure(
-            state="disabled"
-        )
-
-        self.btn_pdf.configure(
             state="disabled"
         )
 
@@ -594,7 +593,7 @@ class TelaOrcamentoFechada:
         except Exception as erro:
 
             self.lbl_total.configure(
-                text=f"Erro na pesquisa: {erro}"
+                text=f"Erro na pesquisar rota no QualP"
             )
 
             self.validar_campos()
@@ -610,47 +609,33 @@ class TelaOrcamentoFechada:
             self.validar_campos()
 
             return
-
+        
+        self.resultado_rota_atual = resultado
         # ======================================================
         # ATUALIZA RESULTADOS DO QUALP
         # ======================================================
 
         self.lbl_origem.configure(
-            text=resultado.get(
-                "origem",
-                "--"
-            )
+            text=resultado.origem
         )
 
         self.lbl_destino.configure(
-            text=resultado.get(
-                "destino",
-                "--"
-            )
+            text=resultado.destino
         )
 
         self.lbl_distancia.configure(
-            text=resultado.get(
-                "distancia",
-                "--"
-            )
+            text=resultado.distancia
         )
 
         self.lbl_pedagio.configure(
             text=self.formatar_valor_resultado(
-                resultado.get(
-                    "pedagio",
-                    "--"
-                )
+                resultado.pedagio
             )
         )
 
         self.lbl_geral.configure(
             text=self.formatar_valor_resultado(
-                resultado.get(
-                    "geral",
-                    "--"
-                )
+                resultado.geral
             )
         )
 
@@ -658,15 +643,8 @@ class TelaOrcamentoFechada:
         # VALORES PARA O CÁLCULO
         # ======================================================
 
-        geral = resultado.get(
-            "geral",
-            0
-        )
-
-        pedagio = resultado.get(
-            "pedagio",
-            0
-        )
+        geral = resultado.geral
+        pedagio = resultado.pedagio
 
         # ======================================================
         # CALCULA ORÇAMENTO
@@ -678,14 +656,8 @@ class TelaOrcamentoFechada:
                 valor_nota=valor_nota,
                 geral=geral,
                 pedagio=pedagio,
-                estado_origem=resultado.get(
-                    "origem",
-                    ""
-                ),
-                estado_destino=resultado.get(
-                    "destino",
-                    ""
-                )
+                estado_origem=resultado.origem,
+                estado_destino=resultado.destino
             )
 
         except Exception as erro:
@@ -697,6 +669,8 @@ class TelaOrcamentoFechada:
             self.validar_campos()
 
             return
+        
+        self.resultado_orcamento_atual = calculo
 
         # ======================================================
         # ATUALIZA CUSTO
@@ -704,10 +678,7 @@ class TelaOrcamentoFechada:
 
         self.lbl_custo.configure(
             text=self.formatar_moeda(
-                calculo.get(
-                    "custo",
-                    0
-                )
+                calculo.custo
             )
         )
 
@@ -717,10 +688,7 @@ class TelaOrcamentoFechada:
 
         self.lbl_imposto.configure(
             text=self.formatar_moeda(
-                calculo.get(
-                    "valor_imposto",
-                    0
-                )
+                calculo.total_impostos
             )
         )
 
@@ -730,10 +698,7 @@ class TelaOrcamentoFechada:
 
         self.lbl_total.configure(
             text=self.formatar_moeda(
-                calculo.get(
-                    "total",
-                    0
-                )
+                calculo.total
             )
         )
 
@@ -753,30 +718,41 @@ class TelaOrcamentoFechada:
 
     def gerar_pdf(self):
 
-        dados = {
-            "origem": self.lbl_origem.cget("text"),
-            "destino": self.lbl_destino.cget("text"),
-            "distancia": self.lbl_distancia.cget("text"),
-            "pedagio": self.lbl_pedagio.cget("text"),
-            "geral": self.lbl_geral.cget("text"),
-            "custo": self.lbl_custo.cget("text"),
-            "imposto": self.lbl_imposto.cget("text"),
-            "total": self.lbl_total.cget("text"),
-            "quantidade_eixos": self.txt_eixos.get(),
-            "calcular_volta": self.var_calcular_volta.get(),
-            "valor_nota": self.txt_valor_nota.get()
-        }
+        if (
+            self.resultado_rota_atual is None
+            or self.resultado_orcamento_atual is None
+        ):
+
+            self.lbl_total.configure(
+                text="Realize uma pesquisa antes de gerar o PDF"
+            )
+
+            self.btn_pdf.configure(
+                state="disabled"
+            )
+
+            return
 
         try:
 
             self.pdf_callback(
-                dados
+                self.resultado_rota_atual,
+                self.resultado_orcamento_atual,
+                quantidade_eixos=int(
+                    self.txt_eixos.get()
+                ),
+                calcular_volta=self.var_calcular_volta.get()
             )
 
         except Exception as erro:
 
+            print(
+                "ERRO AO GERAR PDF:",
+                repr(erro)
+            )
+
             self.lbl_total.configure(
-                text=f"Erro ao gerar PDF: {erro}"
+                text="Erro ao gerar PDF"
             )
 
     # ==========================================================
@@ -784,6 +760,9 @@ class TelaOrcamentoFechada:
     # ==========================================================
 
     def limpar_resultados(self):
+
+        self.resultado_rota_atual = None
+        self.resultado_orcamento_atual = None
 
         labels = [
             self.lbl_origem,
