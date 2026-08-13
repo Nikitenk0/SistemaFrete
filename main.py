@@ -3,7 +3,7 @@ import customtkinter as ctk
 from application.use_cases.calcular_orcamento_fechado import (
     CalcularOrcamentoFechado
 )
-from services.qualp.qualp import QualP
+from services.qualp.pesquisador_rota_qualp import PesquisadorRotaQualP
 from telas.menu_principal import MenuPrincipal
 from telas.services.orcamento_pdf import OrcamentoPdfService
 from utils.gerador_pdf import (
@@ -17,11 +17,11 @@ def criar_aplicacao():
 
     janela = ctk.CTk()
 
-    qualp = QualP()
+    pesquisador_rota = PesquisadorRotaQualP()
 
     calcular_orcamento_fechado = (
         CalcularOrcamentoFechado(
-            pesquisador_rota=qualp
+            pesquisador_rota=pesquisador_rota
         )
     )
 

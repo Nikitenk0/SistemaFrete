@@ -1,14 +1,16 @@
-
 from selenium.webdriver.support import expected_conditions as EC
+
 from services.qualp.origem_destino import OrigemDestino
 from services.qualp.eixos import Eixos
-from services.qualp.volta import calcVolta
+from services.qualp.volta import Volta
+
 import services.qualp.seletores as sel
 
-class Pesquisa:
+
+class FormularioRota:
 
     @staticmethod
-    def executar(
+    def preencher_e_calcular(
         driver,
         wait,
         origem,
@@ -27,30 +29,28 @@ class Pesquisa:
             destino
         )
 
-        # ========================================== # Continua o processo normalmente # ==========================================
-
         Eixos.definir_eixos(
             wait,
             quantidade_eixos
         )
 
-        calcVolta.calcular_volta(
+        Volta.configurar(
             driver,
             wait,
             calcular_volta
         )
 
-        Pesquisa.clicar_calcular(
+        FormularioRota.clicar_calcular(
             driver,
             wait
         )
-    
 
     @staticmethod
     def clicar_calcular(
         driver,
         wait
     ):
+
         botao_calcular = wait.until(
             EC.element_to_be_clickable(
                 sel.BOTAO_CALCULAR
@@ -61,6 +61,3 @@ class Pesquisa:
             "arguments[0].click();",
             botao_calcular
         )
-        
-
-

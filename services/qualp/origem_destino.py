@@ -1,4 +1,5 @@
 import time
+
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -35,7 +36,9 @@ class OrigemDestino:
     @staticmethod
     def preencher_destino(driver, destino):
 
-        input_destino = driver.switch_to.active_element
+        input_destino = (
+            driver.switch_to.active_element
+        )
 
         input_destino.send_keys(destino)
 
@@ -46,17 +49,23 @@ class OrigemDestino:
         time.sleep(2)
 
     @staticmethod
-
     def obter_origem(driver):
+
         input_origem = driver.find_element(
-         *sel.CAMPO_ORIGEM
-          )
-        return input_origem.get_attribute("value")
+            *sel.CAMPO_ORIGEM
+        )
+
+        return input_origem.get_attribute(
+            "value"
+        )
 
     @staticmethod
-
     def obter_destino(driver):
-         input_destino = driver.find_element(
-              *sel.CAMPO_DESTINO
-               )
-         return input_destino.get_attribute("value")
+
+        input_destino = driver.find_element(
+            *sel.CAMPO_DESTINO
+        )
+
+        return input_destino.get_attribute(
+            "value"
+        )
