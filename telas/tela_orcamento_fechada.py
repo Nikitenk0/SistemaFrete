@@ -2,6 +2,7 @@ import customtkinter as ctk
 from domain.models.resultado_rota import ResultadoRota
 from domain.models.resultado_orcamento import ResultadoOrcamento
 from utils.calc_orcamento import calcular_orcamento
+from utils.conversao_monetaria import converter_valor_monetario
 
 
 class TelaOrcamentoFechada:
@@ -563,7 +564,7 @@ class TelaOrcamentoFechada:
 
         try:
 
-            valor_nota = self.converter_valor_monetario(
+            valor_nota = converter_valor_monetario(
                 valor_nota
             )
 
@@ -822,53 +823,6 @@ class TelaOrcamentoFechada:
 
         self.txt_origem.focus_set()
 
-    # ==========================================================
-    # CONVERSÃO DE VALOR MONETÁRIO
-    # ==========================================================
-
-    @staticmethod
-    def converter_valor_monetario(valor):
-
-        valor = valor.strip()
-
-        if not valor:
-
-            raise ValueError(
-                "Valor vazio"
-            )
-
-        # Caso brasileiro:
-        # 150.000,50
-        if "," in valor:
-
-            valor = valor.replace(
-                ".",
-                ""
-            )
-
-            valor = valor.replace(
-                ",",
-                "."
-            )
-
-        else:
-
-            # Permite:
-            # 150000
-            # 150000.50
-
-            # Se houver vários pontos,
-            # considera separador de milhares.
-            if valor.count(".") > 1:
-
-                valor = valor.replace(
-                    ".",
-                    ""
-                )
-
-        return float(
-            valor
-        )
 
     # ==========================================================
     # FORMATAÇÃO EM REAL
@@ -939,7 +893,7 @@ class TelaOrcamentoFechada:
             # mantém o texto original.
             try:
 
-                numero = self.converter_valor_monetario(
+                numero = converter_valor_monetario(
                     texto
                 )
 

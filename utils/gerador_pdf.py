@@ -145,7 +145,7 @@ def gerar_orcamento_pdf(
     )
 
     desenhar_linha(
-        "Quantidade de Eixos:",
+        "Quant. de Eixos:",
         quantidade_eixos
     )
 
