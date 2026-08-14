@@ -32,7 +32,7 @@ ENV/
 # ======================================
 
 # Configuração de autenticação (não enviar ao Git)
-services/qualp/auth/config.py
+infrastructure/qualp/auth/config.py
 
 # Caso exista outro config local na raiz
 # config.py
