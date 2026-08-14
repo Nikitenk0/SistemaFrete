@@ -19,13 +19,16 @@ class FormularioRota:
         calcular_volta
     ):
 
-        OrigemDestino.preencher_origem(
+        input_destino = OrigemDestino.preencher_origem(
+            driver,
             wait,
             origem
         )
 
         OrigemDestino.preencher_destino(
             driver,
+            wait,
+            input_destino,
             destino
         )
 

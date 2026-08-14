@@ -27,6 +27,12 @@ BOTAO_ENTRAR = (
     "//button[.//span[text()='Logar']]"
 )
 
+AUTOCOMPLETE_ITEM_ATIVO = (
+    By.CSS_SELECTOR,
+    ".search-location-container "
+    "[role='listitem'].q-item--active"
+)
+
 CAMPO_ORIGEM = (
     By.XPATH,
     "//input[@placeholder='Origem']"
