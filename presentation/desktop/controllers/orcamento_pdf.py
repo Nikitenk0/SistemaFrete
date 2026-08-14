@@ -1,24 +1,26 @@
 from tkinter import filedialog, messagebox
 
-from application.ports.gerador_orcamento_pdf import (
-    GeradorOrcamentoPdf
+from application.ports.quote_pdf_generator import (
+    QuotePdfGenerator
 )
-from domain.models.resultado_orcamento import ResultadoOrcamento
-from domain.models.resultado_rota import ResultadoRota
+from domain.models.quote_calculation_result import (
+    QuoteCalculationResult
+)
+from domain.models.route_result import RouteResult
 
 
 class OrcamentoPdfController:
 
     def __init__(
         self,
-        gerador_pdf: GeradorOrcamentoPdf
+        gerador_pdf: QuotePdfGenerator
     ):
         self._gerador_pdf = gerador_pdf
 
     def gerar(
         self,
-        resultado_rota: ResultadoRota,
-        resultado_orcamento: ResultadoOrcamento,
+        resultado_rota: RouteResult,
+        resultado_orcamento: QuoteCalculationResult,
         quantidade_eixos: int,
         calcular_volta: bool
     ) -> None:
@@ -37,7 +39,7 @@ class OrcamentoPdfController:
 
         try:
 
-            self._gerador_pdf.gerar(
+            self._gerador_pdf.generate(
                 resultado_rota=resultado_rota,
                 resultado_orcamento=resultado_orcamento,
                 quantidade_eixos=quantidade_eixos,

@@ -1,15 +1,15 @@
 from typing import Protocol
 
-from domain.models.resultado_rota import ResultadoRota
+from domain.models.route_result import RouteResult
 
 
-class PesquisadorRota(Protocol):
+class RouteSearcher(Protocol):
 
-    def pesquisar(
+    def search(
         self,
         origem: str,
         destino: str,
         quantidade_eixos: int,
         calcular_volta: bool
-    ) -> ResultadoRota | None:
+    ) -> RouteResult | None:
         ...

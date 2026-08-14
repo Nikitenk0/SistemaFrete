@@ -1,13 +1,15 @@
 import customtkinter as ctk
-from domain.models.resultado_rota import ResultadoRota
-from domain.models.resultado_orcamento import ResultadoOrcamento
+from domain.models.quote_calculation_result import (
+    QuoteCalculationResult
+)
+from domain.models.route_result import RouteResult
 from utils.conversao_monetaria import converter_valor_monetario
 from application.exceptions import (
-        DadosOrcamentoInvalidos,
-        FalhaCalculoOrcamento,
-        FalhaPesquisaRota,
-        RotaNaoEncontrada,
-    )
+    InvalidQuoteDataError,
+    QuoteCalculationError,
+    RouteNotFoundError,
+    RouteSearchError,
+)
 
 class TelaOrcamentoFechada:
 
@@ -18,8 +20,8 @@ class TelaOrcamentoFechada:
         pdf_callback,
         voltar_callback
     ):
-        self.resultado_rota_atual: ResultadoRota | None = None
-        self.resultado_orcamento_atual: ResultadoOrcamento | None = None
+        self.resultado_rota_atual: RouteResult | None = None
+        self.resultado_orcamento_atual: QuoteCalculationResult | None = None
         self.parent = parent
         self.orcamento_callback = orcamento_callback
         self.pdf_callback = pdf_callback
@@ -575,7 +577,7 @@ class TelaOrcamentoFechada:
                 calcular_volta=calcular_volta
             )
 
-        except DadosOrcamentoInvalidos:
+        except InvalidQuoteDataError:
 
             self.lbl_total.configure(
                 text="Dados do orçamento inválidos"
@@ -585,7 +587,7 @@ class TelaOrcamentoFechada:
 
             return
 
-        except RotaNaoEncontrada:
+        except RouteNotFoundError:
 
             self.lbl_total.configure(
                 text="Nenhuma rota encontrada"
@@ -595,7 +597,7 @@ class TelaOrcamentoFechada:
 
             return
 
-        except FalhaPesquisaRota:
+        except RouteSearchError:
 
             self.lbl_total.configure(
                 text="Erro ao pesquisar rota"
@@ -605,7 +607,7 @@ class TelaOrcamentoFechada:
 
             return
 
-        except FalhaCalculoOrcamento:
+        except QuoteCalculationError:
 
             self.lbl_total.configure(
                 text="Erro ao calcular orçamento"

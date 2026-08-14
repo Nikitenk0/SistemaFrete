@@ -1,7 +1,9 @@
 from domain.calculo.custo import calcular_custo
 from domain.impostos.rctrc import obter_aliquota_rctrc
-from domain.models.imposto_calculado import ImpostoCalculado
-from domain.models.resultado_orcamento import ResultadoOrcamento
+from domain.models.calculated_tax import CalculatedTax
+from domain.models.quote_calculation_result import (
+    QuoteCalculationResult
+)
 
 
 def calcular_orcamento(
@@ -10,7 +12,7 @@ def calcular_orcamento(
     pedagio: float,
     localizacao_origem: str,
     localizacao_destino: str
-) -> ResultadoOrcamento:
+) -> QuoteCalculationResult:
 
     custo = calcular_custo(
         valor_nota
@@ -19,7 +21,7 @@ def calcular_orcamento(
     aliquota_rctrc = obter_aliquota_rctrc(
         localizacao_origem,
         localizacao_destino
-        )
+    )
 
     subtotal = (
         geral
@@ -32,7 +34,7 @@ def calcular_orcamento(
         * aliquota_rctrc
     )
 
-    imposto_rctrc = ImpostoCalculado(
+    imposto_rctrc = CalculatedTax(
         nome="RCTRC",
         aliquota=aliquota_rctrc,
         base_calculo=subtotal,
@@ -44,7 +46,7 @@ def calcular_orcamento(
         + valor_rctrc
     )
 
-    return ResultadoOrcamento(
+    return QuoteCalculationResult(
         valor_nota=valor_nota,
         geral=geral,
         pedagio=pedagio,

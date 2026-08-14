@@ -1,12 +1,12 @@
 from selenium.webdriver.support import expected_conditions as EC
 from infrastructure.qualp.origem_destino import OrigemDestino
-from domain.models.resultado_rota import ResultadoRota
+from domain.models.route_result import RouteResult
 import infrastructure.qualp.seletores as sel
 
 class Resultados:
 
     @staticmethod
-    def obter(driver, wait) -> ResultadoRota:
+    def obter(driver, wait) -> RouteResult:
 
         origem_selecionada = OrigemDestino.obter_origem(
             driver
@@ -41,7 +41,7 @@ class Resultados:
             *sel.GERAL
         ).text
 
-        return ResultadoRota(
+        return RouteResult(
             origem=origem_selecionada,
             destino=destino_selecionado,
             distancia=distancia,

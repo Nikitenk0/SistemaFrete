@@ -1,7 +1,7 @@
 import customtkinter as ctk
 
-from application.use_cases.calcular_orcamento_fechado import (
-    CalcularOrcamentoFechado
+from application.use_cases.calculate_closed_load_quote import (
+    CalculateClosedLoadQuote
 )
 from infrastructure.qualp.pesquisador_rota_qualp import PesquisadorRotaQualP
 from presentation.desktop.menu_principal import MenuPrincipal
@@ -17,11 +17,11 @@ def criar_aplicacao():
 
     janela = ctk.CTk()
 
-    pesquisador_rota = PesquisadorRotaQualP()
+    route_searcher = PesquisadorRotaQualP()
 
-    calcular_orcamento_fechado = (
-        CalcularOrcamentoFechado(
-            pesquisador_rota=pesquisador_rota
+    calculate_closed_load_quote = (
+        CalculateClosedLoadQuote(
+            route_searcher=route_searcher
         )
     )
 
@@ -36,7 +36,7 @@ def criar_aplicacao():
     MenuPrincipal(
         master=janela,
         orcamento_callback=(
-            calcular_orcamento_fechado.executar
+            calculate_closed_load_quote.execute
         ),
         pdf_callback=orcamento_pdf_controller.gerar
     )

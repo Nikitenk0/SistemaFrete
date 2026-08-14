@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ResultadoRota:
+class RouteResult:
     origem: str
     destino: str
     distancia: str

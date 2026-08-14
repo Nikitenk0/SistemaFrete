@@ -1,16 +1,16 @@
 from dataclasses import dataclass
 
-from domain.models.imposto_calculado import ImpostoCalculado
+from domain.models.calculated_tax import CalculatedTax
 
 
 @dataclass(frozen=True)
-class ResultadoOrcamento:
+class QuoteCalculationResult:
     valor_nota: float
     geral: float
     pedagio: float
     custo: float
     subtotal: float
-    impostos: tuple[ImpostoCalculado, ...]
+    impostos: tuple[CalculatedTax, ...]
     total: float
 
     @property

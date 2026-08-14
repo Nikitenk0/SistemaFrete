@@ -4,12 +4,14 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 
-from domain.models.resultado_orcamento import ResultadoOrcamento
-from domain.models.resultado_rota import ResultadoRota
+from domain.models.quote_calculation_result import (
+    QuoteCalculationResult
+)
+from domain.models.route_result import RouteResult
 
 def gerar_orcamento_pdf(
-        resultado_rota: ResultadoRota,
-        resultado_orcamento: ResultadoOrcamento,
+        resultado_rota: RouteResult,
+        resultado_orcamento: QuoteCalculationResult,
         quantidade_eixos: int,
         calcular_volta: bool,
         caminho: str
@@ -260,10 +262,10 @@ def formatar_moeda(valor: float) -> str:
 
 class GeradorOrcamentoPdfReportLab:
 
-    def gerar(
+    def generate(
         self,
-        resultado_rota: ResultadoRota,
-        resultado_orcamento: ResultadoOrcamento,
+        resultado_rota: RouteResult,
+        resultado_orcamento: QuoteCalculationResult,
         quantidade_eixos: int,
         calcular_volta: bool,
         caminho: str

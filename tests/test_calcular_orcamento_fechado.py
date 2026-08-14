@@ -2,54 +2,56 @@ import unittest
 from unittest.mock import patch
 
 from application.exceptions import (
-    DadosOrcamentoInvalidos,
-    FalhaCalculoOrcamento,
-    FalhaPesquisaRota,
-    RotaNaoEncontrada,
+    InvalidQuoteDataError,
+    QuoteCalculationError,
+    RouteNotFoundError,
+    RouteSearchError,
 )
-from application.use_cases.calcular_orcamento_fechado import (
-    CalcularOrcamentoFechado
+from application.use_cases.calculate_closed_load_quote import (
+    CalculateClosedLoadQuote
 )
-from domain.models.resultado_orcamento import ResultadoOrcamento
-from domain.models.resultado_rota import ResultadoRota
+from domain.models.quote_calculation_result import (
+    QuoteCalculationResult
+)
+from domain.models.route_result import RouteResult
 
 
-class PesquisadorRotaFake:
+class RouteSearcherFake:
 
     def __init__(
         self,
-        resultado=None,
-        erro=None
+        result=None,
+        error=None
     ):
-        self.resultado = resultado
-        self.erro = erro
-        self.consulta = None
+        self.result = result
+        self.error = error
+        self.search_args = None
 
-    def pesquisar(
+    def search(
         self,
         origem,
         destino,
         quantidade_eixos,
         calcular_volta
     ):
-        self.consulta = (
+        self.search_args = (
             origem,
             destino,
             quantidade_eixos,
             calcular_volta
         )
 
-        if self.erro is not None:
-            raise self.erro
+        if self.error is not None:
+            raise self.error
 
-        return self.resultado
+        return self.result
 
 
 class TestCalcularOrcamentoFechado(unittest.TestCase):
 
     def test_executa_fluxo_completo(self):
 
-        rota = ResultadoRota(
+        route_result = RouteResult(
             origem="Rio Branco/Acre",
             destino="Maceió/Alagoas",
             distancia="300 km",
@@ -57,15 +59,15 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
             geral="R$ 1.000,00"
         )
 
-        pesquisador = PesquisadorRotaFake(
-            resultado=rota
+        route_searcher = RouteSearcherFake(
+            result=route_result
         )
 
-        caso_de_uso = CalcularOrcamentoFechado(
-            pesquisador_rota=pesquisador
+        use_case = CalculateClosedLoadQuote(
+            route_searcher=route_searcher
         )
 
-        orcamento = ResultadoOrcamento(
+        quote_calculation_result = QuoteCalculationResult(
             valor_nota=100000.0,
             geral=1000.0,
             pedagio=100.0,
@@ -78,13 +80,13 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
         with patch(
             (
                 "application.use_cases."
-                "calcular_orcamento_fechado."
+                "calculate_closed_load_quote."
                 "calcular_orcamento"
             ),
-            return_value=orcamento
-        ) as calcular:
+            return_value=quote_calculation_result
+        ) as calculate_quote_mock:
 
-            resultado = caso_de_uso.executar(
+            result = use_case.execute(
                 valor_nota="R$ 100.000,00",
                 origem="Rio Branco",
                 destino="Maceió",
@@ -93,7 +95,7 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
             )
 
         self.assertEqual(
-            pesquisador.consulta,
+            route_searcher.search_args,
             (
                 "Rio Branco",
                 "Maceió",
@@ -102,7 +104,7 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
             )
         )
 
-        calcular.assert_called_once_with(
+        calculate_quote_mock.assert_called_once_with(
             valor_nota=100000.0,
             geral=1000.0,
             pedagio=100.0,
@@ -111,27 +113,27 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
         )
 
         self.assertIs(
-            resultado.rota,
-            rota
+            result.rota,
+            route_result
         )
 
         self.assertIs(
-            resultado.orcamento,
-            orcamento
+            result.orcamento,
+            quote_calculation_result
         )
 
     def test_rejeita_valor_da_nota_invalido(self):
 
-        pesquisador = PesquisadorRotaFake()
+        route_searcher = RouteSearcherFake()
 
-        caso_de_uso = CalcularOrcamentoFechado(
-            pesquisador_rota=pesquisador
+        use_case = CalculateClosedLoadQuote(
+            route_searcher=route_searcher
         )
 
         with self.assertRaises(
-            DadosOrcamentoInvalidos
+            InvalidQuoteDataError
         ):
-            caso_de_uso.executar(
+            use_case.execute(
                 valor_nota="valor inválido",
                 origem="Rio Branco",
                 destino="Maceió",
@@ -140,25 +142,25 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
             )
 
         self.assertIsNone(
-            pesquisador.consulta
+            route_searcher.search_args
         )
 
     def test_converte_falha_da_pesquisa(self):
 
-        pesquisador = PesquisadorRotaFake(
-            erro=RuntimeError(
+        route_searcher = RouteSearcherFake(
+            error=RuntimeError(
                 "Falha externa"
             )
         )
 
-        caso_de_uso = CalcularOrcamentoFechado(
-            pesquisador_rota=pesquisador
+        use_case = CalculateClosedLoadQuote(
+            route_searcher=route_searcher
         )
 
         with self.assertRaises(
-            FalhaPesquisaRota
+            RouteSearchError
         ):
-            caso_de_uso.executar(
+            use_case.execute(
                 valor_nota="100000",
                 origem="Rio Branco",
                 destino="Maceió",
@@ -168,18 +170,18 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
 
     def test_informa_rota_nao_encontrada(self):
 
-        pesquisador = PesquisadorRotaFake(
-            resultado=None
+        route_searcher = RouteSearcherFake(
+            result=None
         )
 
-        caso_de_uso = CalcularOrcamentoFechado(
-            pesquisador_rota=pesquisador
+        use_case = CalculateClosedLoadQuote(
+            route_searcher=route_searcher
         )
 
         with self.assertRaises(
-            RotaNaoEncontrada
+            RouteNotFoundError
         ):
-            caso_de_uso.executar(
+            use_case.execute(
                 valor_nota="100000",
                 origem="Rio Branco",
                 destino="Maceió",
@@ -189,7 +191,7 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
 
     def test_converte_falha_do_calculo(self):
 
-        rota = ResultadoRota(
+        route_result = RouteResult(
             origem="Rio Branco/Acre",
             destino="Maceió/Alagoas",
             distancia="300 km",
@@ -197,18 +199,18 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
             geral="R$ 1.000,00"
         )
 
-        pesquisador = PesquisadorRotaFake(
-            resultado=rota
+        route_searcher = RouteSearcherFake(
+            result=route_result
         )
 
-        caso_de_uso = CalcularOrcamentoFechado(
-            pesquisador_rota=pesquisador
+        use_case = CalculateClosedLoadQuote(
+            route_searcher=route_searcher
         )
 
         with patch(
             (
                 "application.use_cases."
-                "calcular_orcamento_fechado."
+                "calculate_closed_load_quote."
                 "calcular_orcamento"
             ),
             side_effect=RuntimeError(
@@ -217,9 +219,9 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
         ):
 
             with self.assertRaises(
-                FalhaCalculoOrcamento
+                QuoteCalculationError
             ):
-                caso_de_uso.executar(
+                use_case.execute(
                     valor_nota="100000",
                     origem="Rio Branco",
                     destino="Maceió",

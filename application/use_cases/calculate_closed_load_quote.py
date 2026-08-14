@@ -1,0 +1,84 @@
+from application.dtos.closed_load_quote_result import (
+    ClosedLoadQuoteResult
+)
+from application.ports.route_searcher import RouteSearcher
+from application.exceptions import (
+    InvalidQuoteDataError,
+    QuoteCalculationError,
+    RouteNotFoundError,
+    RouteSearchError,
+)
+from domain.calculo.orcamento import calcular_orcamento
+from utils.conversao_monetaria import converter_valor_monetario
+
+class CalculateClosedLoadQuote:
+
+    def __init__(
+        self,
+        route_searcher: RouteSearcher
+    ):
+        self._route_searcher = route_searcher
+
+    def execute(
+        self,
+        valor_nota: str | int | float,
+        origem: str,
+        destino: str,
+        quantidade_eixos: int,
+        calcular_volta: bool
+    ) -> ClosedLoadQuoteResult:
+
+        try:
+            valor_nota_convertido = converter_valor_monetario(
+                valor_nota
+            )
+
+        except ValueError as error:
+            raise InvalidQuoteDataError(
+                "Valor da nota inválido"
+            ) from error
+
+        try:
+            route_result = self._route_searcher.search(
+                origem,
+                destino,
+                quantidade_eixos,
+                calcular_volta
+            )
+
+        except Exception as error:
+            raise RouteSearchError(
+                "Não foi possível pesquisar a rota"
+            ) from error
+
+        if route_result is None:
+            raise RouteNotFoundError(
+                "Nenhuma rota encontrada"
+            )
+
+        try:
+            geral = converter_valor_monetario(
+                route_result.geral
+            )
+
+            pedagio = converter_valor_monetario(
+                route_result.pedagio
+            )
+
+            quote_calculation_result = calcular_orcamento(
+                valor_nota=valor_nota_convertido,
+                geral=geral,
+                pedagio=pedagio,
+                localizacao_origem=route_result.origem,
+                localizacao_destino=route_result.destino
+            )
+
+        except Exception as error:
+            raise QuoteCalculationError(
+                "Não foi possível calcular o orçamento"
+            ) from error
+
+        return ClosedLoadQuoteResult(
+            rota=route_result,
+            orcamento=quote_calculation_result
+        )

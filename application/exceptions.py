@@ -1,18 +1,18 @@
-class ErroAplicacao(Exception):
+class ApplicationError(Exception):
     """Erro esperado durante a execução de um caso de uso."""
 
 
-class DadosOrcamentoInvalidos(ErroAplicacao):
+class InvalidQuoteDataError(ApplicationError):
     """Os dados fornecidos pelo usuário são inválidos."""
 
 
-class RotaNaoEncontrada(ErroAplicacao):
+class RouteNotFoundError(ApplicationError):
     """Nenhuma rota foi encontrada para os dados informados."""
 
 
-class FalhaPesquisaRota(ErroAplicacao):
+class RouteSearchError(ApplicationError):
     """Falha ao consultar o serviço responsável pela rota."""
 
 
-class FalhaCalculoOrcamento(ErroAplicacao):
+class QuoteCalculationError(ApplicationError):
     """Falha ao processar os dados e calcular o orçamento."""
