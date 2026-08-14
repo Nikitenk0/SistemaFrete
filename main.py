@@ -6,7 +6,7 @@ from application.use_cases.calcular_orcamento_fechado import (
 from infrastructure.qualp.pesquisador_rota_qualp import PesquisadorRotaQualP
 from presentation.desktop.menu_principal import MenuPrincipal
 from presentation.desktop.controllers.orcamento_pdf import OrcamentoPdfController
-from infrastructure.pdf.gerador_orcamento_retortlab import (
+from infrastructure.pdf.gerador_orcamento_reportlab import (
     GeradorOrcamentoPdfReportLab
 )
 
