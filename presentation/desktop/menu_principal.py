@@ -2,7 +2,16 @@ import customtkinter as ctk
 
 from tkinter import LEFT, RIGHT, BOTH, Y, X
 
-from presentation.desktop.estilos import *
+from presentation.desktop.estilos import (
+    ALTURA_JANELA,
+    COR_BOTAO,
+    COR_FUNDO,
+    COR_MENU,
+    FONTE_BOTAO,
+    FONTE_TITULO,
+    LARGURA_JANELA,
+    LARGURA_MENU,
+)
 from presentation.desktop.tela_orcamento_fechada import TelaOrcamentoFechada
 from presentation.desktop.tela_documentos import TelaDocumentos
 from presentation.desktop.tela_orcamento_complemento import TelaOrcamentoComplemento
@@ -159,7 +168,7 @@ class MenuPrincipal:
 
         if self.submenu_orcamento.winfo_ismapped():
 
-            self.submenu_orcamento.pack_forget()
+            self.submenu_orcamento.place_forget()
 
         else:
 

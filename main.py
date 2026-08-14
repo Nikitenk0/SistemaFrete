@@ -29,7 +29,7 @@ def criar_aplicacao():
         GeradorOrcamentoPdfReportLab()
     )
 
-    orcamento_pdf_service = OrcamentoPdfController(
+    orcamento_pdf_controller = OrcamentoPdfController(
         gerador_pdf=gerador_orcamento_pdf
     )
 
@@ -38,7 +38,7 @@ def criar_aplicacao():
         orcamento_callback=(
             calcular_orcamento_fechado.executar
         ),
-        pdf_callback=orcamento_pdf_service.gerar
+        pdf_callback=orcamento_pdf_controller.gerar
     )
 
     return janela

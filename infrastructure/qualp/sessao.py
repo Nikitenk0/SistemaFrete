@@ -13,14 +13,6 @@ class SessaoQualP:
         self._driver = None
         self._wait = None
 
-    @property
-    def driver(self):
-        return self._driver
-
-    @property
-    def wait(self):
-        return self._wait
-
     def abrir(self):
         self._driver = Navegador.iniciar()
 

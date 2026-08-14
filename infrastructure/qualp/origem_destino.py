@@ -185,7 +185,6 @@ class OrigemDestino:
         )
     @staticmethod
     def preencher_destino(
-        driver,
         wait,
         input_destino,
         destino

@@ -26,7 +26,6 @@ class FormularioRota:
         )
 
         OrigemDestino.preencher_destino(
-            driver,
             wait,
             input_destino,
             destino
