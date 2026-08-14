@@ -1,10 +1,10 @@
 from selenium.webdriver.support import expected_conditions as EC
 
-from services.qualp.origem_destino import OrigemDestino
-from services.qualp.eixos import Eixos
-from services.qualp.volta import Volta
+from infrastructure.qualp.origem_destino import OrigemDestino
+from infrastructure.qualp.eixos import Eixos
+from infrastructure.qualp.volta import Volta
 
-import services.qualp.seletores as sel
+import infrastructure.qualp.seletores as sel
 
 
 class FormularioRota:

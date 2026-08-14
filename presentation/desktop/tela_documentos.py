@@ -1,6 +1,6 @@
 import customtkinter as ctk
 
-from telas.estilos import (
+from presentation.desktop.estilos import (
     COR_BOTAO,
     COR_FUNDO,
     FONTE_BOTAO,

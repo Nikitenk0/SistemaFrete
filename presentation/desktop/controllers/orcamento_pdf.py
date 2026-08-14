@@ -7,7 +7,7 @@ from domain.models.resultado_orcamento import ResultadoOrcamento
 from domain.models.resultado_rota import ResultadoRota
 
 
-class OrcamentoPdfService:
+class OrcamentoPdfController:
 
     def __init__(
         self,

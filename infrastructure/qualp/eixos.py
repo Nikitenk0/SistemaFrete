@@ -1,6 +1,6 @@
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-import services.qualp.seletores as sel
+import infrastructure.qualp.seletores as sel
 
 
 class Eixos:

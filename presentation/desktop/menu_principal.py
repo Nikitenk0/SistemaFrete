@@ -2,10 +2,10 @@ import customtkinter as ctk
 
 from tkinter import LEFT, RIGHT, BOTH, Y, X
 
-from telas.estilos import *
-from telas.tela_orcamento_fechada import TelaOrcamentoFechada
-from telas.tela_documentos import TelaDocumentos
-from telas.tela_orcamento_complemento import TelaOrcamentoComplemento
+from presentation.desktop.estilos import *
+from presentation.desktop.tela_orcamento_fechada import TelaOrcamentoFechada
+from presentation.desktop.tela_documentos import TelaDocumentos
+from presentation.desktop.tela_orcamento_complemento import TelaOrcamentoComplemento
 
 
 

@@ -7,7 +7,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 
-import services.qualp.seletores as sel
+import infrastructure.qualp.seletores as sel
 
 
 class OrigemDestino:

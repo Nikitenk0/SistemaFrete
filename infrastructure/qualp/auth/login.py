@@ -1,6 +1,6 @@
 from selenium.webdriver.support import expected_conditions as EC
 from .config import EMAIL, SENHA
-import services.qualp.seletores as sel
+import infrastructure.qualp.seletores as sel
 
 
 class Login:

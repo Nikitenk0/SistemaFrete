@@ -3,10 +3,10 @@ import customtkinter as ctk
 from application.use_cases.calcular_orcamento_fechado import (
     CalcularOrcamentoFechado
 )
-from services.qualp.pesquisador_rota_qualp import PesquisadorRotaQualP
-from telas.menu_principal import MenuPrincipal
-from telas.services.orcamento_pdf import OrcamentoPdfService
-from utils.gerador_pdf import (
+from infrastructure.qualp.pesquisador_rota_qualp import PesquisadorRotaQualP
+from presentation.desktop.menu_principal import MenuPrincipal
+from presentation.desktop.controllers.orcamento_pdf import OrcamentoPdfController
+from infrastructure.pdf.gerador_orcamento_retortlab import (
     GeradorOrcamentoPdfReportLab
 )
 
@@ -29,7 +29,7 @@ def criar_aplicacao():
         GeradorOrcamentoPdfReportLab()
     )
 
-    orcamento_pdf_service = OrcamentoPdfService(
+    orcamento_pdf_service = OrcamentoPdfController(
         gerador_pdf=gerador_orcamento_pdf
     )
 

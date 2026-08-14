@@ -1,7 +1,7 @@
 from selenium.webdriver.support import expected_conditions as EC
-from services.qualp.origem_destino import OrigemDestino
+from infrastructure.qualp.origem_destino import OrigemDestino
 from domain.models.resultado_rota import ResultadoRota
-import services.qualp.seletores as sel
+import infrastructure.qualp.seletores as sel
 
 class Resultados:
 
