@@ -81,4 +81,4 @@ class CalculateClosedLoadQuote:
         return ClosedLoadQuoteResult(
             route_result=route_result,
             quote_result=quote_calculation_result
-    )
+        )
