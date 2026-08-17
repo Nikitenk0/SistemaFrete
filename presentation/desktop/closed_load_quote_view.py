@@ -656,7 +656,7 @@ class ClosedLoadQuoteView:
             text=route_result.distancia
         )
 
-        self.toll_value_labellabel.configure(
+        self.toll_value_label.configure(
             text=self.format_result_value(
                 route_result.pedagio
             )
@@ -823,11 +823,11 @@ class ClosedLoadQuoteView:
     # ==========================================================
 
     @staticmethod
-    def format_currency(valor):
+    def format_currency(value):
 
         try:
 
-            value = float(
+            number = float(
                 value
             )
 
@@ -841,7 +841,7 @@ class ClosedLoadQuoteView:
             )
 
         formatted_value = (
-            f"{valor:,.2f}"
+            f"{number:,.2f}"
             .replace(",", "X")
             .replace(".", ",")
             .replace("X", ".")
