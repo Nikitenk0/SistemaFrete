@@ -1,6 +1,6 @@
 import unittest
 
-from utils.conversao_monetaria import parse_monetary_value
+from application.parsers.monetary_value import parse_monetary_value
 
 
 class TestConversaoMonetaria(unittest.TestCase):

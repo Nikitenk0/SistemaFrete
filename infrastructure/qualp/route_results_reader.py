@@ -2,7 +2,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from infrastructure.qualp.route_location_fields import (
     RouteLocationFields
 )
-from domain.models.route_result import RouteResult
+from application.dtos.route_result import RouteResult
 import infrastructure.qualp.selectors as sel
 
 class RouteResultsReader:

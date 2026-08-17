@@ -1,4 +1,4 @@
-from config.custos import (
+from domain.calculo.custos import (
     LIMITE_VALOR_NOTA,
     CUSTO_ATE_LIMITE,
     CUSTO_ACIMA_LIMITE,

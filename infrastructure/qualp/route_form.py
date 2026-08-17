@@ -22,7 +22,7 @@ class RouteForm:
         calcular_volta
     ):
 
-        input_destino = RouteLocationFields.fill_origin(
+        destination_input = RouteLocationFields.fill_origin(
             driver,
             wait,
             origem
@@ -30,7 +30,7 @@ class RouteForm:
 
         RouteLocationFields.fill_destination(
             wait,
-            input_destino,
+            destination_input,
             destino
         )
 
@@ -56,7 +56,7 @@ class RouteForm:
         wait
     ):
 
-        botao_calcular = wait.until(
+        calculate_button = wait.until(
             EC.element_to_be_clickable(
                 sel.CALCULATE_BUTTON
             )
@@ -64,5 +64,5 @@ class RouteForm:
 
         driver.execute_script(
             "arguments[0].click();",
-            botao_calcular
+            calculate_button
         )

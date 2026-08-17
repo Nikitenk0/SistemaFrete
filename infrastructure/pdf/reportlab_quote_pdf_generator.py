@@ -7,7 +7,7 @@ from reportlab.lib.units import cm
 from domain.models.quote_calculation_result import (
     QuoteCalculationResult
 )
-from domain.models.route_result import RouteResult
+from application.dtos.route_result import RouteResult
 
 def generate_quote_pdf(
     route_result: RouteResult,

@@ -1,5 +1,5 @@
-from config.estados import ESTADOS
-from config.impostos.matriz_rctrc import MATRIZ_RCTRC
+from domain.impostos.estados import ESTADOS
+from domain.impostos.matriz_rctrc import MATRIZ_RCTRC
 
 
 _NORMALIZED_STATES = {

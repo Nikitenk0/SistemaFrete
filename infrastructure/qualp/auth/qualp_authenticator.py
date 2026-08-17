@@ -12,13 +12,13 @@ class QualPAuthenticator:
 
             # Aguarda o pop-up aparecer e clica no botão de fechar
             try:
-                botao_fechar = wait.until(
+                close_button = wait.until(
                     EC.element_to_be_clickable(
                         sel.POPUP_CLOSE_BUTTON
                     )
                 )
 
-                botao_fechar.click()
+                close_button.click()
 
                 wait.until(
                     EC.invisibility_of_element_located(
@@ -26,16 +26,16 @@ class QualPAuthenticator:
                     )
                 )
 
-            except Exception as e:
+            except Exception as error:
                 print("Pop-up não encontrado ou já estava fechado:", e)
 
             # Primeiro botão "Logar"
-            botao_login = wait.until(
+            login_button = wait.until(
                 EC.element_to_be_clickable(
                     sel.LOGIN_BUTTON
                 )
             )
-            botao_login.click()
+            login_button.click()
 
             # Campo de e-mail
             email = wait.until(
@@ -46,21 +46,21 @@ class QualPAuthenticator:
             email.send_keys(EMAIL)
 
             # Campo de senha
-            senha = wait.until(
+            password_field = wait.until(
                 EC.visibility_of_element_located(
                     sel.PASSWORD_FIELD
                 )
             )
-            senha.send_keys(SENHA)
+            password_field.send_keys(SENHA)
 
             # Botão de envio do formulário
-            entrar = wait.until(
+            submit_button = wait.until(
                 EC.element_to_be_clickable(
                     sel.LOGIN_SUBMIT_BUTTON
                 )
             )
 
-            entrar.click()
+            submit_button.click()
 
             # Espera o formulário de login desaparecer
             wait.until(

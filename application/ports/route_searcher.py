@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from domain.models.route_result import RouteResult
+from application.dtos.route_result import RouteResult
 
 
 class RouteSearcher(Protocol):

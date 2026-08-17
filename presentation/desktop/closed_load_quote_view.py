@@ -3,8 +3,8 @@ import customtkinter as ctk
 from domain.models.quote_calculation_result import (
     QuoteCalculationResult
 )
-from domain.models.route_result import RouteResult
-from utils.conversao_monetaria import parse_monetary_value
+from application.dtos.route_result import RouteResult
+from application.parsers.monetary_value import parse_monetary_value
 from application.exceptions import (
     InvalidQuoteDataError,
     QuoteCalculationError,
@@ -634,8 +634,8 @@ class ClosedLoadQuoteView:
 
             return
 
-        route_result = result.rota
-        quote_result = result.orcamento
+        route_result = result.route_result
+        quote_result = result.quote_result
 
         self.current_route_result = route_result
         self.current_quote_result = quote_result

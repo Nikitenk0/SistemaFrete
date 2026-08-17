@@ -6,7 +6,7 @@ from application.ports.quote_pdf_generator import (
 from domain.models.quote_calculation_result import (
     QuoteCalculationResult
 )
-from domain.models.route_result import RouteResult
+from application.dtos.route_result import RouteResult
 
 
 class QuotePdfController:

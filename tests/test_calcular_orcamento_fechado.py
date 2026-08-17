@@ -13,7 +13,7 @@ from application.use_cases.calculate_closed_load_quote import (
 from domain.models.quote_calculation_result import (
     QuoteCalculationResult
 )
-from domain.models.route_result import RouteResult
+from application.dtos.route_result import RouteResult
 
 
 class RouteSearcherFake:
@@ -113,12 +113,12 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
         )
 
         self.assertIs(
-            result.rota,
+            result.route_result,
             route_result
         )
 
         self.assertIs(
-            result.orcamento,
+            result.quote_result,
             quote_calculation_result
         )
 

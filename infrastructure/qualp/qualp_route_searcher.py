@@ -1,4 +1,4 @@
-from domain.models.route_result import RouteResult
+from application.dtos.route_result import RouteResult
 from infrastructure.qualp.auth.qualp_authenticator import (
     QualPAuthenticator
 )
