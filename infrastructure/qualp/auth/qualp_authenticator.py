@@ -1,12 +1,12 @@
 from selenium.webdriver.support import expected_conditions as EC
 from .config import EMAIL, SENHA
-import infrastructure.qualp.seletores as sel
+import infrastructure.qualp.selectors as sel
 
 
-class Login:
+class QualPAuthenticator:
 
     @staticmethod
-    def executar(driver, wait):
+    def authenticate(driver, wait):
             
             driver.get(sel.URL)
 
@@ -14,7 +14,7 @@ class Login:
             try:
                 botao_fechar = wait.until(
                     EC.element_to_be_clickable(
-                        sel.POPUP_FECHAR
+                        sel.POPUP_CLOSE_BUTTON
                     )
                 )
 
@@ -22,7 +22,7 @@ class Login:
 
                 wait.until(
                     EC.invisibility_of_element_located(
-                        sel.POPUP_FECHAR
+                        sel.POPUP_CLOSE_BUTTON
                     )
                 )
 
@@ -32,7 +32,7 @@ class Login:
             # Primeiro botão "Logar"
             botao_login = wait.until(
                 EC.element_to_be_clickable(
-                    sel.BOTAO_LOGIN
+                    sel.LOGIN_BUTTON
                 )
             )
             botao_login.click()
@@ -40,7 +40,7 @@ class Login:
             # Campo de e-mail
             email = wait.until(
                 EC.visibility_of_element_located(
-                    sel.CAMPO_EMAIL
+                    sel.EMAIL_FIELD
                 )
             )
             email.send_keys(EMAIL)
@@ -48,7 +48,7 @@ class Login:
             # Campo de senha
             senha = wait.until(
                 EC.visibility_of_element_located(
-                    sel.CAMPO_SENHA
+                    sel.PASSWORD_FIELD
                 )
             )
             senha.send_keys(SENHA)
@@ -56,7 +56,7 @@ class Login:
             # Botão de envio do formulário
             entrar = wait.until(
                 EC.element_to_be_clickable(
-                    sel.BOTAO_ENTRAR
+                    sel.LOGIN_SUBMIT_BUTTON
                 )
             )
 
@@ -65,13 +65,13 @@ class Login:
             # Espera o formulário de login desaparecer
             wait.until(
                 EC.invisibility_of_element_located(
-                    sel.CAMPO_SENHA
+                    sel.PASSWORD_FIELD
                 )
             )
 
             # Espera o campo Origem aparecer
             wait.until(
                 EC.visibility_of_element_located(
-                    sel.CAMPO_ORIGEM
+                    sel.ORIGIN_FIELD
                 )
             )

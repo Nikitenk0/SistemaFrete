@@ -1,16 +1,19 @@
 from selenium.webdriver.support import expected_conditions as EC
 
-from infrastructure.qualp.origem_destino import OrigemDestino
-from infrastructure.qualp.eixos import Eixos
-from infrastructure.qualp.volta import Volta
+from infrastructure.qualp.route_location_fields import (
+    RouteLocationFields
+)
+from infrastructure.qualp.axle_selector import AxleSelector
+from infrastructure.qualp.round_trip_selector import (
+    RoundTripSelector
+)
+import infrastructure.qualp.selectors as sel
 
-import infrastructure.qualp.seletores as sel
 
-
-class FormularioRota:
+class RouteForm:
 
     @staticmethod
-    def preencher_e_calcular(
+    def fill_and_calculate(
         driver,
         wait,
         origem,
@@ -19,43 +22,43 @@ class FormularioRota:
         calcular_volta
     ):
 
-        input_destino = OrigemDestino.preencher_origem(
+        input_destino = RouteLocationFields.fill_origin(
             driver,
             wait,
             origem
         )
 
-        OrigemDestino.preencher_destino(
+        RouteLocationFields.fill_destination(
             wait,
             input_destino,
             destino
         )
 
-        Eixos.definir_eixos(
+        AxleSelector.select(
             wait,
             quantidade_eixos
         )
 
-        Volta.configurar(
+        RoundTripSelector.configure(
             driver,
             wait,
             calcular_volta
         )
 
-        FormularioRota.clicar_calcular(
+        RouteForm.click_calculate(
             driver,
             wait
         )
 
     @staticmethod
-    def clicar_calcular(
+    def click_calculate(
         driver,
         wait
     ):
 
         botao_calcular = wait.until(
             EC.element_to_be_clickable(
-                sel.BOTAO_CALCULAR
+                sel.CALCULATE_BUTTON
             )
         )
 

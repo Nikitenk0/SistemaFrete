@@ -10,10 +10,10 @@ class QuotePdfGenerator(Protocol):
 
     def generate(
         self,
-        resultado_rota: RouteResult,
-        resultado_orcamento: QuoteCalculationResult,
-        quantidade_eixos: int,
-        calcular_volta: bool,
-        caminho: str
+        route_result: RouteResult,
+        quote_result: QuoteCalculationResult,
+        axle_count: int,
+        include_return_trip: bool,
+        path: str
     ) -> None:
         ...

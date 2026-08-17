@@ -1,27 +1,27 @@
 from selenium.webdriver.support import expected_conditions as EC
 
-import infrastructure.qualp.seletores as sel
+import infrastructure.qualp.selectors as sel
 
 
-class Volta:
+class RoundTripSelector:
 
     @staticmethod
-    def configurar(
+    def configure(
         driver,
         wait,
-        calcular_volta: bool
+        enabled: bool
     ) -> None:
 
-        if not calcular_volta:
+        if not enabled:
             return
 
-        botao_volta = wait.until(
+        round_trip_switch = wait.until(
             EC.element_to_be_clickable(
-                sel.BOTAO_CALCULAR_VOLTA
+                sel.ROUND_TRIP_SWITCH
             )
         )
 
         driver.execute_script(
             "arguments[0].click();",
-            botao_volta
+            round_trip_switch
         )

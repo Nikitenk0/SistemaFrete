@@ -1,9 +1,9 @@
 from selenium.webdriver.support.ui import WebDriverWait
+from infrastructure.qualp.chrome_webdriver_factory import (
+    ChromeWebDriverFactory
+)
 
-from infrastructure.qualp.navegador import Navegador
-
-
-class SessaoQualP:
+class QualPSession:
 
     def __init__(
         self,
@@ -13,8 +13,8 @@ class SessaoQualP:
         self._driver = None
         self._wait = None
 
-    def abrir(self):
-        self._driver = Navegador.iniciar()
+    def open(self):
+        self._driver = ChromeWebDriverFactory.create()
 
         self._wait = WebDriverWait(
             self._driver,
@@ -26,7 +26,7 @@ class SessaoQualP:
             self._wait
         )
 
-    def fechar(self):
+    def close(self):
         if self._driver is None:
             return
 

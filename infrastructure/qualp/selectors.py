@@ -2,78 +2,78 @@ from selenium.webdriver.common.by import By
 
 URL = "https://qualp.com.br/#/"
 
-POPUP_FECHAR = (
+POPUP_CLOSE_BUTTON = (
     By.CSS_SELECTOR,
     "#q-app > div > div > main > div.antt-modal-overlay > div > button"
 )
 # ACESSA A TELA DE LOGIN
-BOTAO_LOGIN = (
+LOGIN_BUTTON = (
     By.XPATH,
     "//button[contains(.,'Logar')]"
 )
 
-CAMPO_EMAIL = (
+EMAIL_FIELD = (
     By.CSS_SELECTOR,
     "input[type='email']"
 )
 
-CAMPO_SENHA = (
+PASSWORD_FIELD = (
     By.CSS_SELECTOR,
     "input[type='password']"
 )
 # CLICA NO BOTÃO DE LOGAR
-BOTAO_ENTRAR = (
+LOGIN_SUBMIT_BUTTON = (
     By.XPATH,
     "//button[.//span[text()='Logar']]"
 )
 
-AUTOCOMPLETE_ITEM_ATIVO = (
+ACTIVE_AUTOCOMPLETE_ITEM = (
     By.CSS_SELECTOR,
     ".search-location-container "
     "[role='listitem'].q-item--active"
 )
 
-CAMPO_ORIGEM = (
+ORIGIN_FIELD = (
     By.XPATH,
     "//input[@placeholder='Origem']"
 )
 
-CAMPO_DESTINO = (
+DESTINATION_FIELD = (
     By.XPATH,
     "//input[@placeholder='Destino']"
 )
 
-CONTROLE_EIXOS = (
+AXLE_CONTROL = (
     By.CLASS_NAME,
     "vehicle-control-axis"
 )
 
-CAMPO_EIXOS = (
+AXLE_FIELD = (
     By.CSS_SELECTOR,
     ".vehicle-control-axis input"
 )
 
-BOTAO_CALCULAR = (
+CALCULATE_BUTTON = (
     By.XPATH,
     "//button[@type='submit']//span[contains(text(),'Calcular')]"
 )
 
-BOTAO_CALCULAR_VOLTA = (
+ROUND_TRIP_SWITCH = (
     By.XPATH,
     "//div[@role='switch' and @aria-label='Calcular Volta']"
 )
 
-TABELA_ROTAS = (
+ROUTE_TABLE = (
     By.CSS_SELECTOR,
     "div.route-table"
 )
 
-DISTANCIA = (
+DISTANCE_VALUE = (
     By.XPATH,
     "//span[normalize-space()='Distância']/following-sibling::span"
 )
 
-PEDAGIO = (
+TOLL_VALUE = (
     By.XPATH,
     "//span[normalize-space()='Pedágio']/following-sibling::span"
 )

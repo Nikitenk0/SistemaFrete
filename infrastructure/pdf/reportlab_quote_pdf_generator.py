@@ -9,13 +9,13 @@ from domain.models.quote_calculation_result import (
 )
 from domain.models.route_result import RouteResult
 
-def gerar_orcamento_pdf(
-        resultado_rota: RouteResult,
-        resultado_orcamento: QuoteCalculationResult,
-        quantidade_eixos: int,
-        calcular_volta: bool,
-        caminho: str
-    ):
+def generate_quote_pdf(
+    route_result: RouteResult,
+    quote_result: QuoteCalculationResult,
+    axle_count: int,
+    include_return_trip: bool,
+    path: str
+):
     """
 
         Gera o PDF de um orçamento a partir dos resultados
@@ -24,11 +24,11 @@ def gerar_orcamento_pdf(
     """
 
     pdf = canvas.Canvas(
-        caminho,
+        path,
         pagesize=A4
     )
 
-    largura, altura = A4
+    width, height = A4
 
     # ==========================================================
     # TÍTULO
@@ -40,8 +40,8 @@ def gerar_orcamento_pdf(
     )
 
     pdf.drawCentredString(
-        largura / 2,
-        altura - 3 * cm,
+        width / 2,
+        height - 3 * cm,
         "ORÇAMENTO"
     )
 
@@ -54,14 +54,14 @@ def gerar_orcamento_pdf(
         10
     )
 
-    data = datetime.now().strftime(
+    generated_at = datetime.now().strftime(
         "%d/%m/%Y %H:%M"
     )
 
     pdf.drawRightString(
-        largura - 2 * cm,
-        altura - 4 * cm,
-        f"Data: {data}"
+        width - 2 * cm,
+        height - 4 * cm,
+        f"Data: {generated_at}"
     )
 
     # ==========================================================
@@ -70,96 +70,96 @@ def gerar_orcamento_pdf(
 
     pdf.line(
         2 * cm,
-        altura - 4.5 * cm,
-        largura - 2 * cm,
-        altura - 4.5 * cm
+        height - 4.5 * cm,
+        width - 2 * cm,
+        height - 4.5 * cm
     )
     # ==========================================================
     # DADOS DO ORÇAMENTO
     # ==========================================================
 
-    y = altura - 6 * cm
+    y = height - 6 * cm
 
-    x_rotulo = 3 * cm
-    x_valor = 7 * cm
+    label_x = 3 * cm
+    value_x = 7 * cm
 
-    espacamento = 0.9 * cm
+    line_spacing = 0.9 * cm
 
 
-    def desenhar_linha(
-        rotulo,
-        valor,
-        fonte_rotulo="Helvetica-Bold",
-        fonte_valor="Helvetica",
-        tamanho=12
+    def draw_line(
+        label,
+        value,
+        label_font="Helvetica-Bold",
+        value_font="Helvetica",
+        font_size=12
     ):
         nonlocal y
 
         pdf.setFont(
-            fonte_rotulo,
-            tamanho
+            label_font,
+            font_size
         )
 
         pdf.drawString(
-            x_rotulo,
+            label_x,
             y,
-            rotulo
+            label
         )
 
         pdf.setFont(
-            fonte_valor,
-            tamanho
+            value_font,
+            font_size
         )
 
         pdf.drawString(
-            x_valor,
+            value_x,
             y,
-            str(valor)
+            str(value)
         )
 
-        y -= espacamento
+        y -= line_spacing
 
 
     # ==========================================================
     # DADOS DA ROTA
     # ==========================================================
 
-    desenhar_linha(
+    draw_line(
         "Origem:",
-        resultado_rota.origem
+        route_result.origem
     )
 
-    desenhar_linha(
+    draw_line(
         "Destino:",
-        resultado_rota.destino
+        route_result.destino
     )
 
-    desenhar_linha(
+    draw_line(
         "Distância:",
-        resultado_rota.distancia
+        route_result.distancia
     )
 
-    desenhar_linha(
+    draw_line(
         "Pedágio:",
-        formatar_moeda(
-            resultado_orcamento.pedagio
+        format_currency(
+            quote_result.pedagio
         )
     )
 
-    desenhar_linha(
+    draw_line(
         "Quant. de Eixos:",
-        quantidade_eixos
+        axle_count
     )
 
-    texto_calcular_volta = (
+    return_trip_text = (
         "Sim"
-        if calcular_volta
+        if include_return_trip
         else "Não"
     )
 
-    desenhar_linha(
+    draw_line(
         "Calcular Volta:",
-        texto_calcular_volta
+        return_trip_text
     )
 
 
@@ -170,30 +170,30 @@ def gerar_orcamento_pdf(
     y -= 0.5 * cm
 
     pdf.line(
-        x_rotulo,
+        label_x,
         y + 0.3 * cm,
-        largura - 3 * cm,
+        width - 3 * cm,
         y + 0.3 * cm
     )
 
-    desenhar_linha(
+    draw_line(
         "Valor da Nota:",
-        formatar_moeda(
-            resultado_orcamento.valor_nota
+        format_currency(
+            quote_result.valor_nota
         )
     )
 
-    desenhar_linha(
+    draw_line(
         "Geral:",
-        formatar_moeda(
-            resultado_orcamento.geral
+        format_currency(
+            quote_result.geral
         )
     )
 
-    desenhar_linha(
+    draw_line(
         "Custo:",
-        formatar_moeda(
-            resultado_orcamento.custo
+        format_currency(
+            quote_result.custo
         )
     )
 
@@ -202,12 +202,12 @@ def gerar_orcamento_pdf(
     # IMPOSTOS
     # ==========================================================
 
-    for imposto in resultado_orcamento.impostos:
+    for tax in quote_result.impostos:
 
-        desenhar_linha(
-            f"{imposto.nome}:",
-            formatar_moeda(
-                imposto.valor
+        draw_line(
+            f"{tax.nome}:",
+            format_currency(
+                tax.valor
             )
         )
 
@@ -219,9 +219,9 @@ def gerar_orcamento_pdf(
     y -= 0.5 * cm
 
     pdf.line(
-        x_rotulo,
+        label_x,
         y + 0.3 * cm,
-        largura - 3 * cm,
+        width - 3 * cm,
         y + 0.3 * cm
     )
 
@@ -231,16 +231,16 @@ def gerar_orcamento_pdf(
     )
 
     pdf.drawString(
-        x_rotulo,
+        label_x,
         y,
         "TOTAL:"
     )
 
     pdf.drawString(
-        x_valor,
+        value_x,
         y,
-        formatar_moeda(
-            resultado_orcamento.total
+        format_currency(
+            quote_result.total
         )
     )
     # ==========================================================
@@ -249,32 +249,32 @@ def gerar_orcamento_pdf(
 
     pdf.save()
 
-def formatar_moeda(valor: float) -> str:
+def format_currency(value: float) -> str:
 
-    valor_formatado = (
-        f"{valor:,.2f}"
+    formatted_value = (
+        f"{value:,.2f}"
         .replace(",", "X")
         .replace(".", ",")
         .replace("X", ".")
     )
 
-    return f"R$ {valor_formatado}"
+    return f"R$ {formatted_value}"
 
-class GeradorOrcamentoPdfReportLab:
+class ReportLabQuotePdfGenerator:
 
     def generate(
         self,
-        resultado_rota: RouteResult,
-        resultado_orcamento: QuoteCalculationResult,
-        quantidade_eixos: int,
-        calcular_volta: bool,
-        caminho: str
+        route_result: RouteResult,
+        quote_result: QuoteCalculationResult,
+        axle_count: int,
+        include_return_trip: bool,
+        path: str
     ) -> None:
 
-        gerar_orcamento_pdf(
-            resultado_rota=resultado_rota,
-            resultado_orcamento=resultado_orcamento,
-            quantidade_eixos=quantidade_eixos,
-            calcular_volta=calcular_volta,
-            caminho=caminho
+        generate_quote_pdf(
+            route_result=route_result,
+            quote_result=quote_result,
+            axle_count=axle_count,
+            include_return_trip=include_return_trip,
+            path=path
         )

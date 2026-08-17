@@ -3,11 +3,11 @@ import customtkinter as ctk
 from application.use_cases.calculate_closed_load_quote import (
     CalculateClosedLoadQuote
 )
-from infrastructure.qualp.pesquisador_rota_qualp import PesquisadorRotaQualP
+from infrastructure.qualp.qualp_route_searcher import QualPRouteSearcher
 from presentation.desktop.menu_principal import MenuPrincipal
 from presentation.desktop.controllers.orcamento_pdf import OrcamentoPdfController
-from infrastructure.pdf.gerador_orcamento_reportlab import (
-    GeradorOrcamentoPdfReportLab
+from infrastructure.pdf.reportlab_quote_pdf_generator import (
+    ReportLabQuotePdfGenerator
 )
 
 def criar_aplicacao():
@@ -17,7 +17,7 @@ def criar_aplicacao():
 
     janela = ctk.CTk()
 
-    route_searcher = PesquisadorRotaQualP()
+    route_searcher = QualPRouteSearcher()
 
     calculate_closed_load_quote = (
         CalculateClosedLoadQuote(
@@ -26,7 +26,7 @@ def criar_aplicacao():
     )
 
     gerador_orcamento_pdf = (
-        GeradorOrcamentoPdfReportLab()
+        ReportLabQuotePdfGenerator()
     )
 
     orcamento_pdf_controller = OrcamentoPdfController(

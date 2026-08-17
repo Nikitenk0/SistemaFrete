@@ -40,11 +40,11 @@ class OrcamentoPdfController:
         try:
 
             self._gerador_pdf.generate(
-                resultado_rota=resultado_rota,
-                resultado_orcamento=resultado_orcamento,
-                quantidade_eixos=quantidade_eixos,
-                calcular_volta=calcular_volta,
-                caminho=caminho
+                route_result=resultado_rota,
+                quote_result=resultado_orcamento,
+                axle_count=quantidade_eixos,
+                include_return_trip=calcular_volta,
+                path=caminho
             )
 
         except Exception as erro:
