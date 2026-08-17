@@ -1,4 +1,5 @@
 import customtkinter as ctk
+
 from domain.models.quote_calculation_result import (
     QuoteCalculationResult
 )
@@ -11,40 +12,49 @@ from application.exceptions import (
     RouteSearchError,
 )
 
-class TelaOrcamentoFechada:
+
+class ClosedLoadQuoteView:
 
     def __init__(
         self,
         parent,
-        orcamento_callback,
-        pdf_callback,
-        voltar_callback
+        calculate_quote_callback,
+        generate_pdf_callback,
+        navigate_back
     ):
-        self.resultado_rota_atual: RouteResult | None = None
-        self.resultado_orcamento_atual: QuoteCalculationResult | None = None
-        self.parent = parent
-        self.orcamento_callback = orcamento_callback
-        self.pdf_callback = pdf_callback
-        self.voltar_callback = voltar_callback
+        self.current_route_result: RouteResult | None = None
+        self.current_quote_result: QuoteCalculationResult | None = None
 
-        self.criar_tela()
+        self.parent = parent
+        self.calculate_quote_callback = calculate_quote_callback
+        self.generate_pdf_callback = generate_pdf_callback
+        self.navigate_back = navigate_back
+
+        self.build()
 
     # ==========================================================
     # CRIAÇÃO DA TELA
     # ==========================================================
 
-    def criar_tela(self):
+    def build(self):
 
         # Permite que o conteúdo ocupe toda a área disponível.
-        self.parent.grid_rowconfigure(0, weight=1)
-        self.parent.grid_columnconfigure(0, weight=1)
+        self.parent.grid_rowconfigure(
+            0,
+            weight=1
+        )
 
-        self.frame_principal = ctk.CTkFrame(
+        self.parent.grid_columnconfigure(
+            0,
+            weight=1
+        )
+
+        self.main_frame = ctk.CTkFrame(
             self.parent,
             fg_color="transparent"
         )
 
-        self.frame_principal.grid(
+        self.main_frame.grid(
             row=0,
             column=0,
             sticky="nsew",
@@ -52,7 +62,7 @@ class TelaOrcamentoFechada:
             pady=20
         )
 
-        self.frame_principal.grid_columnconfigure(
+        self.main_frame.grid_columnconfigure(
             0,
             weight=1
         )
@@ -62,7 +72,7 @@ class TelaOrcamentoFechada:
         # ======================================================
 
         ctk.CTkLabel(
-            self.frame_principal,
+            self.main_frame,
             text="ORÇAMENTO",
             font=("Arial", 22, "bold")
         ).grid(
@@ -72,7 +82,7 @@ class TelaOrcamentoFechada:
         )
 
         ctk.CTkLabel(
-            self.frame_principal,
+            self.main_frame,
             text="Aqui ficarão os campos do orçamento.",
             font=("Arial", 12)
         ).grid(
@@ -85,19 +95,19 @@ class TelaOrcamentoFechada:
         # FORMULÁRIO
         # ======================================================
 
-        self.criar_formulario()
+        self.build_form()
 
         # ======================================================
         # SEPARADOR / ESPAÇO
         # ======================================================
 
-        self.frame_separador = ctk.CTkFrame(
-            self.frame_principal,
+        self.separator_frame = ctk.CTkFrame(
+            self.main_frame,
             height=2,
             fg_color=("gray85", "gray25")
         )
 
-        self.frame_separador.grid(
+        self.separator_frame.grid(
             row=3,
             column=0,
             sticky="ew",
@@ -108,50 +118,50 @@ class TelaOrcamentoFechada:
         # ÁREA INFERIOR
         # ======================================================
 
-        self.frame_inferior = ctk.CTkFrame(
-            self.frame_principal,
+        self.bottom_frame = ctk.CTkFrame(
+            self.main_frame,
             fg_color="transparent"
         )
 
-        self.frame_inferior.grid(
+        self.bottom_frame.grid(
             row=4,
             column=0,
             sticky="ew"
         )
 
         # Resultados ocupam um pouco mais de espaço.
-        self.frame_inferior.grid_columnconfigure(
+        self.bottom_frame.grid_columnconfigure(
             0,
             weight=2
         )
 
         # Botões.
-        self.frame_inferior.grid_columnconfigure(
+        self.bottom_frame.grid_columnconfigure(
             1,
             weight=1
         )
 
-        # Espaço vazio à direita, semelhante à imagem 1.
-        self.frame_inferior.grid_columnconfigure(
+        # Espaço vazio à direita.
+        self.bottom_frame.grid_columnconfigure(
             2,
             weight=1
         )
 
-        self.criar_resultados()
-        self.criar_botoes()
+        self.build_results()
+        self.build_buttons()
 
     # ==========================================================
     # FORMULÁRIO
     # ==========================================================
 
-    def criar_formulario(self):
+    def build_form(self):
 
-        self.frame_formulario = ctk.CTkFrame(
-            self.frame_principal,
+        self.form_frame = ctk.CTkFrame(
+            self.main_frame,
             fg_color="transparent"
         )
 
-        self.frame_formulario.grid(
+        self.form_frame.grid(
             row=2,
             column=0,
             sticky="ew"
@@ -160,7 +170,7 @@ class TelaOrcamentoFechada:
         # 4 colunas iguais.
         for coluna in range(4):
 
-            self.frame_formulario.grid_columnconfigure(
+            self.form_frame.grid_columnconfigure(
                 coluna,
                 weight=1
             )
@@ -170,7 +180,7 @@ class TelaOrcamentoFechada:
         # ======================================================
 
         ctk.CTkLabel(
-            self.frame_formulario,
+            self.form_frame,
             text="Origem",
             font=("Arial", 12)
         ).grid(
@@ -179,20 +189,20 @@ class TelaOrcamentoFechada:
             pady=(0, 5)
         )
 
-        self.txt_origem = ctk.CTkEntry(
-            self.frame_formulario,
+        self.origin_entry = ctk.CTkEntry(
+            self.form_frame,
             width=180
         )
 
-        self.txt_origem.grid(
+        self.origin_entry.grid(
             row=1,
             column=0,
             padx=10
         )
 
-        self.txt_origem.bind(
+        self.origin_entry.bind(
             "<KeyRelease>",
-            self.validar_campos
+            self.validate_fields
         )
 
         # ======================================================
@@ -200,7 +210,7 @@ class TelaOrcamentoFechada:
         # ======================================================
 
         ctk.CTkLabel(
-            self.frame_formulario,
+            self.form_frame,
             text="Destino",
             font=("Arial", 12)
         ).grid(
@@ -209,20 +219,20 @@ class TelaOrcamentoFechada:
             pady=(0, 5)
         )
 
-        self.txt_destino = ctk.CTkEntry(
-            self.frame_formulario,
+        self.destination_entry = ctk.CTkEntry(
+            self.form_frame,
             width=180
         )
 
-        self.txt_destino.grid(
+        self.destination_entry.grid(
             row=1,
             column=1,
             padx=10
         )
 
-        self.txt_destino.bind(
+        self.destination_entry.bind(
             "<KeyRelease>",
-            self.validar_campos
+            self.validate_fields
         )
 
         # ======================================================
@@ -230,7 +240,7 @@ class TelaOrcamentoFechada:
         # ======================================================
 
         ctk.CTkLabel(
-            self.frame_formulario,
+            self.form_frame,
             text="Quantidade de eixos",
             font=("Arial", 12)
         ).grid(
@@ -239,8 +249,8 @@ class TelaOrcamentoFechada:
             pady=(0, 5)
         )
 
-        self.txt_eixos = ctk.CTkComboBox(
-            self.frame_formulario,
+        self.axle_count_combobox = ctk.CTkComboBox(
+            self.form_frame,
             values=[
                 str(i)
                 for i in range(2, 10)
@@ -249,20 +259,22 @@ class TelaOrcamentoFechada:
             state="readonly"
         )
 
-        self.txt_eixos.grid(
+        self.axle_count_combobox.grid(
             row=1,
             column=2,
             padx=10
         )
 
-        self.txt_eixos.set("6")
+        self.axle_count_combobox.set(
+            "6"
+        )
 
         # ======================================================
         # VALOR DA NOTA
         # ======================================================
 
         ctk.CTkLabel(
-            self.frame_formulario,
+            self.form_frame,
             text="Valor de Nota",
             font=("Arial", 12)
         ).grid(
@@ -272,7 +284,7 @@ class TelaOrcamentoFechada:
         )
 
         self.txt_valor_nota = ctk.CTkEntry(
-            self.frame_formulario,
+            self.form_frame,
             width=180,
             placeholder_text="Ex.: 150000"
         )
@@ -285,25 +297,25 @@ class TelaOrcamentoFechada:
 
         self.txt_valor_nota.bind(
             "<KeyRelease>",
-            self.validar_campos
+            self.validate_fields
         )
 
         # ======================================================
         # CALCULAR VOLTA
         # ======================================================
 
-        self.var_calcular_volta = ctk.BooleanVar(
+        self.include_return_trip_var = ctk.BooleanVar(
             value=False
         )
 
-        self.switch_volta = ctk.CTkSwitch(
-            self.frame_formulario,
+        self.round_trip_switch = ctk.CTkSwitch(
+            self.form_frame,
             text="Calcular Volta",
-            variable=self.var_calcular_volta,
+            variable=self.include_return_trip_var,
             font=("Arial", 12)
         )
 
-        self.switch_volta.grid(
+        self.round_trip_switch.grid(
             row=2,
             column=0,
             columnspan=4,
@@ -316,26 +328,26 @@ class TelaOrcamentoFechada:
     # RESULTADOS
     # ==========================================================
 
-    def criar_resultados(self):
+    def build_results(self):
 
-        self.frame_resultado = ctk.CTkFrame(
-            self.frame_inferior,
+        self.results_frame = ctk.CTkFrame(
+            self.bottom_frame,
             fg_color="transparent"
         )
 
-        self.frame_resultado.grid(
+        self.results_frame.grid(
             row=0,
             column=0,
             sticky="nw",
             padx=(40, 20)
         )
 
-        self.frame_resultado.grid_columnconfigure(
+        self.results_frame.grid_columnconfigure(
             0,
             minsize=100
         )
 
-        self.frame_resultado.grid_columnconfigure(
+        self.results_frame.grid_columnconfigure(
             1,
             minsize=180
         )
@@ -344,15 +356,15 @@ class TelaOrcamentoFechada:
         # FUNÇÃO AUXILIAR
         # ======================================================
 
-        def criar_linha(
-            linha,
-            texto,
-            negrito=False
+        def create_result_row(
+            row,
+            text,
+            bold=False
         ):
 
-            if negrito:
+            if bold:
 
-                fonte = (
+                font = (
                     "Arial",
                     14,
                     "bold"
@@ -360,97 +372,97 @@ class TelaOrcamentoFechada:
 
             else:
 
-                fonte = (
+                font = (
                     "Arial",
                     14
                 )
 
             ctk.CTkLabel(
-                self.frame_resultado,
-                text=texto,
-                font=fonte
+                self.results_frame,
+                text=text,
+                font=font
             ).grid(
-                row=linha,
+                row=row,
                 column=0,
                 sticky="w",
                 padx=(0, 15),
                 pady=7
             )
 
-            label_valor = ctk.CTkLabel(
-                self.frame_resultado,
+            value_label = ctk.CTkLabel(
+                self.results_frame,
                 text="--",
-                font=fonte
+                font=font
             )
 
-            label_valor.grid(
-                row=linha,
+            value_label.grid(
+                row=row,
                 column=1,
                 sticky="w",
                 padx=5,
                 pady=7
             )
 
-            return label_valor
+            return value_label
 
         # ======================================================
         # CAMPOS
         # ======================================================
 
-        self.lbl_origem = criar_linha(
+        self.origin_value_label = create_result_row(
             0,
             "Origem"
         )
 
-        self.lbl_destino = criar_linha(
+        self.destination_value_label = create_result_row(
             1,
             "Destino"
         )
 
-        self.lbl_distancia = criar_linha(
+        self.distance_value_label = create_result_row(
             2,
             "Distância"
         )
 
-        self.lbl_pedagio = criar_linha(
+        self.toll_value_label = create_result_row(
             3,
             "Pedágio"
         )
 
-        self.lbl_geral = criar_linha(
+        self.lbl_geral = create_result_row(
             4,
             "Geral",
-            negrito=True
+            bold=True
         )
 
-        self.lbl_custo = criar_linha(
+        self.lbl_custo = create_result_row(
             5,
             "Custo"
         )
 
-        self.lbl_imposto = criar_linha(
+        self.tax_value_label = create_result_row(
             6,
             "Imposto"
         )
 
-        self.lbl_total = criar_linha(
+        self.total_value_label = create_result_row(
             7,
             "Total",
-            negrito=True
+            bold=True
         )
 
     # ==========================================================
     # BOTÕES
     # ==========================================================
 
-    def criar_botoes(self):
+    def build_buttons(self):
 
-        self.frame_botoes = ctk.CTkFrame(
-            self.frame_inferior,
+        self.buttons_frame = ctk.CTkFrame(
+            self.bottom_frame,
             fg_color="transparent"
         )
 
-        self.frame_botoes.grid(
+        self.buttons_frame.grid(
             row=0,
             column=1,
             sticky="n",
@@ -462,16 +474,16 @@ class TelaOrcamentoFechada:
         # PESQUISAR
         # ======================================================
 
-        self.btn_pesquisar = ctk.CTkButton(
-            self.frame_botoes,
+        self.calculate_button = ctk.CTkButton(
+            self.buttons_frame,
             text="Pesquisar",
-            command=self.pesquisar,
+            command=self.calculate_quote,
             state="disabled",
             width=120,
             height=30
         )
 
-        self.btn_pesquisar.pack(
+        self.calculate_button.pack(
             pady=5
         )
 
@@ -479,16 +491,16 @@ class TelaOrcamentoFechada:
         # GERAR PDF
         # ======================================================
 
-        self.btn_pdf = ctk.CTkButton(
-            self.frame_botoes,
+        self.pdf_button = ctk.CTkButton(
+            self.buttons_frame,
             text="Gerar PDF",
-            command=self.gerar_pdf,
+            command=self.generate_pdf,
             state="disabled",
             width=120,
             height=30
         )
 
-        self.btn_pdf.pack(
+        self.pdf_button.pack(
             pady=5
         )
 
@@ -496,15 +508,15 @@ class TelaOrcamentoFechada:
         # VOLTAR
         # ======================================================
 
-        self.btn_voltar = ctk.CTkButton(
-            self.frame_botoes,
+        self.back_button = ctk.CTkButton(
+            self.buttons_frame,
             text="← Voltar",
-            command=self.voltar_callback,
+            command=self.navigate_back,
             width=120,
             height=30
         )
 
-        self.btn_voltar.pack(
+        self.back_button.pack(
             pady=5
         )
 
@@ -512,142 +524,147 @@ class TelaOrcamentoFechada:
     # VALIDAÇÃO DOS CAMPOS
     # ==========================================================
 
-    def validar_campos(self, event=None):
+    def validate_fields(
+        self,
+        event=None
+    ):
 
         valor_nota = self.txt_valor_nota.get().strip()
-        origem = self.txt_origem.get().strip()
-        destino = self.txt_destino.get().strip()
+        origem = self.origin_entry.get().strip()
+        destino = self.destination_entry.get().strip()
 
         if valor_nota and origem and destino:
 
-            self.btn_pesquisar.configure(
+            self.calculate_button.configure(
                 state="normal"
             )
 
         else:
 
-            self.btn_pesquisar.configure(
+            self.calculate_button.configure(
                 state="disabled"
             )
 
     # ==========================================================
-    # PESQUISAR
+    # CALCULAR ORÇAMENTO
     # ==========================================================
 
-    def pesquisar(self):
+    def calculate_quote(self):
 
-        self.limpar_resultados()
+        self.clear_results()
+
         # Desabilita temporariamente para evitar múltiplos cliques.
-        self.btn_pesquisar.configure(
+        self.calculate_button.configure(
             state="disabled"
         )
 
         valor_nota = self.txt_valor_nota.get().strip()
-        origem = self.txt_origem.get().strip()
-        destino = self.txt_destino.get().strip()
+        origem = self.origin_entry.get().strip()
+        destino = self.destination_entry.get().strip()
 
         try:
 
-            eixos = int(
-                self.txt_eixos.get()
+            axle_count = int(
+                self.axle_count_combobox.get()
             )
 
         except ValueError:
 
-            self.lbl_total.configure(
+            self.total_value_label.configure(
                 text="Quantidade de eixos inválida"
             )
 
-            self.validar_campos()
+            self.validate_fields()
 
             return
 
-        calcular_volta = self.var_calcular_volta.get()
+        include_return_trip = self.include_return_trip_var.get()
 
         # ======================================================
         # EXECUTA O CASO DE USO
         # ======================================================
+
         try:
 
-            resultado = self.orcamento_callback(
+            result = self.calculate_quote_callback(
                 valor_nota=valor_nota,
                 origem=origem,
                 destino=destino,
-                quantidade_eixos=eixos,
-                calcular_volta=calcular_volta
+                quantidade_eixos=axle_count,
+                calcular_volta=include_return_trip
             )
 
         except InvalidQuoteDataError:
 
-            self.lbl_total.configure(
+            self.total_value_label.configure(
                 text="Dados do orçamento inválidos"
             )
 
-            self.validar_campos()
+            self.validate_fields()
 
             return
 
         except RouteNotFoundError:
 
-            self.lbl_total.configure(
+            self.total_value_label.configure(
                 text="Nenhuma rota encontrada"
             )
 
-            self.validar_campos()
+            self.validate_fields()
 
             return
 
         except RouteSearchError:
 
-            self.lbl_total.configure(
+            self.total_value_label.configure(
                 text="Erro ao pesquisar rota"
             )
 
-            self.validar_campos()
+            self.validate_fields()
 
             return
 
         except QuoteCalculationError:
 
-            self.lbl_total.configure(
+            self.total_value_label.configure(
                 text="Erro ao calcular orçamento"
             )
 
-            self.validar_campos()
+            self.validate_fields()
 
             return
 
-        
-        resultado_rota = resultado.rota
-        resultado_orcamento = resultado.orcamento
+        route_result = result.rota
+        quote_result = result.orcamento
 
-        self.resultado_rota_atual = resultado_rota
-        self.resultado_orcamento_atual = resultado_orcamento
+        self.current_route_result = route_result
+        self.current_quote_result = quote_result
+
         # ======================================================
         # ATUALIZA RESULTADOS DA ROTA
         # ======================================================
 
-        self.lbl_origem.configure(
-            text=resultado_rota.origem
+        self.origin_value_label.configure(
+            text=route_result.origem
         )
 
-        self.lbl_destino.configure(
-            text=resultado_rota.destino
+        self.destination_value_label.configure(
+            text=route_result.destino
         )
 
-        self.lbl_distancia.configure(
-            text=resultado_rota.distancia
+        self.distance_value_label.configure(
+            text=route_result.distancia
         )
 
-        self.lbl_pedagio.configure(
-            text=self.formatar_valor_resultado(
-                resultado_rota.pedagio
+        self.toll_value_labellabel.configure(
+            text=self.format_result_value(
+                route_result.pedagio
             )
         )
 
         self.lbl_geral.configure(
-            text=self.formatar_valor_resultado(
-                resultado_rota.geral
+            text=self.format_result_value(
+                route_result.geral
             )
         )
 
@@ -656,8 +673,8 @@ class TelaOrcamentoFechada:
         # ======================================================
 
         self.lbl_custo.configure(
-            text=self.formatar_moeda(
-                resultado_orcamento.custo
+            text=self.format_currency(
+                quote_result.custo
             )
         )
 
@@ -665,9 +682,9 @@ class TelaOrcamentoFechada:
         # ATUALIZA IMPOSTO
         # ======================================================
 
-        self.lbl_imposto.configure(
-            text=self.formatar_moeda(
-                resultado_orcamento.total_impostos
+        self.tax_value_label.configure(
+            text=self.format_currency(
+                quote_result.total_impostos
             )
         )
 
@@ -675,9 +692,9 @@ class TelaOrcamentoFechada:
         # ATUALIZA TOTAL
         # ======================================================
 
-        self.lbl_total.configure(
-            text=self.formatar_moeda(
-                resultado_orcamento.total
+        self.total_value_label.configure(
+            text=self.format_currency(
+                quote_result.total
             )
         )
 
@@ -685,28 +702,28 @@ class TelaOrcamentoFechada:
         # HABILITA BOTÕES
         # ======================================================
 
-        self.btn_pdf.configure(
+        self.pdf_button.configure(
             state="normal"
         )
 
-        self.validar_campos()
+        self.validate_fields()
 
     # ==========================================================
     # GERAR PDF
     # ==========================================================
 
-    def gerar_pdf(self):
+    def generate_pdf(self):
 
         if (
-            self.resultado_rota_atual is None
-            or self.resultado_orcamento_atual is None
+            self.current_route_result is None
+            or self.current_quote_result is None
         ):
 
-            self.lbl_total.configure(
+            self.total_value_label.configure(
                 text="Realize uma pesquisa antes de gerar o PDF"
             )
 
-            self.btn_pdf.configure(
+            self.pdf_button.configure(
                 state="disabled"
             )
 
@@ -714,23 +731,23 @@ class TelaOrcamentoFechada:
 
         try:
 
-            self.pdf_callback(
-                self.resultado_rota_atual,
-                self.resultado_orcamento_atual,
-                quantidade_eixos=int(
-                    self.txt_eixos.get()
+            self.generate_pdf_callback(
+                self.current_route_result,
+                self.current_quote_result,
+                axle_count=int(
+                    self.axle_count_combobox.get()
                 ),
-                calcular_volta=self.var_calcular_volta.get()
+                include_return_trip=self.include_return_trip_var.get()
             )
 
-        except Exception as erro:
+        except Exception as error:
 
             print(
                 "ERRO AO GERAR PDF:",
-                repr(erro)
+                repr(error)
             )
 
-            self.lbl_total.configure(
+            self.total_value_label.configure(
                 text="Erro ao gerar PDF"
             )
 
@@ -738,20 +755,20 @@ class TelaOrcamentoFechada:
     # LIMPAR RESULTADOS
     # ==========================================================
 
-    def limpar_resultados(self):
+    def clear_results(self):
 
-        self.resultado_rota_atual = None
-        self.resultado_orcamento_atual = None
+        self.current_route_result = None
+        self.current_quote_result = None
 
         labels = [
-            self.lbl_origem,
-            self.lbl_destino,
-            self.lbl_distancia,
-            self.lbl_pedagio,
+            self.origin_value_label,
+            self.destination_value_label,
+            self.distance_value_label,
+            self.toll_value_label,
             self.lbl_geral,
             self.lbl_custo,
-            self.lbl_imposto,
-            self.lbl_total
+            self.tax_value_label,
+            self.total_value_label
         ]
 
         for label in labels:
@@ -760,7 +777,7 @@ class TelaOrcamentoFechada:
                 text="--"
             )
 
-        self.btn_pdf.configure(
+        self.pdf_button.configure(
             state="disabled"
         )
 
@@ -768,14 +785,14 @@ class TelaOrcamentoFechada:
     # LIMPAR TELA COMPLETA
     # ==========================================================
 
-    def limpar_tela(self):
+    def reset(self):
 
-        self.txt_origem.delete(
+        self.origin_entry.delete(
             0,
             "end"
         )
 
-        self.txt_destino.delete(
+        self.destination_entry.delete(
             0,
             "end"
         )
@@ -785,34 +802,33 @@ class TelaOrcamentoFechada:
             "end"
         )
 
-        self.txt_eixos.set(
+        self.axle_count_combobox.set(
             "6"
         )
 
-        self.var_calcular_volta.set(
+        self.include_return_trip_var.set(
             False
         )
 
-        self.limpar_resultados()
+        self.clear_results()
 
-        self.btn_pesquisar.configure(
+        self.calculate_button.configure(
             state="disabled"
         )
 
-        self.txt_origem.focus_set()
-
+        self.origin_entry.focus_set()
 
     # ==========================================================
     # FORMATAÇÃO EM REAL
     # ==========================================================
 
     @staticmethod
-    def formatar_moeda(valor):
+    def format_currency(valor):
 
         try:
 
-            valor = float(
-                valor
+            value = float(
+                value
             )
 
         except (
@@ -821,10 +837,10 @@ class TelaOrcamentoFechada:
         ):
 
             return str(
-                valor
+                value
             )
 
-        valor_formatado = (
+        formatted_value = (
             f"{valor:,.2f}"
             .replace(",", "X")
             .replace(".", ",")
@@ -832,19 +848,19 @@ class TelaOrcamentoFechada:
         )
 
         return (
-            f"R$ {valor_formatado}"
+            f"R$ {formatted_value}"
         )
 
     # ==========================================================
     # FORMATA VALORES RETORNADOS PELA PESQUISA
     # ==========================================================
 
-    def formatar_valor_resultado(
+    def format_result_value(
         self,
-        valor
+        value
     ):
 
-        if valor in (
+        if value in (
             None,
             "",
             "--"
@@ -855,34 +871,34 @@ class TelaOrcamentoFechada:
         # Se já vier como string formatada,
         # mantém como está.
         if isinstance(
-            valor,
+            value,
             str
         ):
 
-            texto = valor.strip()
+            text = value.strip()
 
-            if texto.startswith(
+            if text.startswith(
                 "R$"
             ):
 
-                return texto
+                return text
 
             # Se não for possível transformar em número,
             # mantém o texto original.
             try:
 
-                numero = converter_valor_monetario(
-                    texto
+                number = converter_valor_monetario(
+                    text
                 )
 
             except ValueError:
 
-                return texto
+                return text
 
-            return self.formatar_moeda(
-                numero
+            return self.format_currency(
+                number
             )
 
-        return self.formatar_moeda(
-            valor
+        return self.format_currency(
+            value
         )

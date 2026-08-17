@@ -9,23 +9,23 @@ from domain.models.quote_calculation_result import (
 from domain.models.route_result import RouteResult
 
 
-class OrcamentoPdfController:
+class QuotePdfController:
 
     def __init__(
         self,
-        gerador_pdf: QuotePdfGenerator
+        pdf_generator: QuotePdfGenerator
     ):
-        self._gerador_pdf = gerador_pdf
+        self._pdf_generator = pdf_generator
 
-    def gerar(
+    def generate(
         self,
-        resultado_rota: RouteResult,
-        resultado_orcamento: QuoteCalculationResult,
-        quantidade_eixos: int,
-        calcular_volta: bool
+        route_result: RouteResult,
+        quote_result: QuoteCalculationResult,
+        axle_count: int,
+        include_return_trip: bool
     ) -> None:
 
-        caminho = filedialog.asksaveasfilename(
+        path = filedialog.asksaveasfilename(
             title="Salvar orçamento",
             defaultextension=".pdf",
             filetypes=[
@@ -34,26 +34,26 @@ class OrcamentoPdfController:
             initialfile="orcamento.pdf"
         )
 
-        if not caminho:
+        if not path:
             return
 
         try:
 
-            self._gerador_pdf.generate(
-                route_result=resultado_rota,
-                quote_result=resultado_orcamento,
-                axle_count=quantidade_eixos,
-                include_return_trip=calcular_volta,
-                path=caminho
+            self._pdf_generator.generate(
+                route_result=route_result,
+                quote_result=quote_result,
+                axle_count=axle_count,
+                include_return_trip=include_return_trip,
+                path=path
             )
 
-        except Exception as erro:
+        except Exception as error:
 
             messagebox.showerror(
                 "Erro",
                 (
                     "Não foi possível gerar o PDF."
-                    f"\n\n{erro}"
+                    f"\n\n{error}"
                 )
             )
 

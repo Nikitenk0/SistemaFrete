@@ -1,31 +1,31 @@
 import customtkinter as ctk
 
-from presentation.desktop.estilos import (
-    COR_BOTAO,
-    COR_FUNDO,
-    FONTE_BOTAO,
+from presentation.desktop.styles import (
+    BUTTON_COLOR,
+    BACKGROUND_COLOR,
+    BUTTON_FONT,
 )
 
 
-class TelaDocumentos:
+class DocumentsView:
 
     def __init__(
         self,
         parent,
-        voltar_callback
+        navigate_back
     ):
         self.parent = parent
-        self.voltar_callback = voltar_callback
+        self.navigate_back = navigate_back
 
-        self.criar_tela()
+        self.build()
 
-    def criar_tela(self):
+    def build(self):
 
         ctk.CTkLabel(
             self.parent,
             text="DOCUMENTOS",
             font=("Arial", 22, "bold"),
-            fg_color=COR_FUNDO
+            fg_color=BACKGROUND_COLOR
         ).pack(
             pady=30
         )
@@ -33,16 +33,16 @@ class TelaDocumentos:
         ctk.CTkLabel(
             self.parent,
             text="Aqui ficarão os documentos.",
-            fg_color=COR_FUNDO
+            fg_color=BACKGROUND_COLOR
         ).pack()
 
         ctk.CTkButton(
             self.parent,
             text="← Voltar",
-            command=self.voltar_callback,
-            fg_color=COR_BOTAO,
+            command=self.navigate_back,
+            fg_color=BUTTON_COLOR,
             text_color="white",
-            font=FONTE_BOTAO,
+            font=BUTTON_FONT,
             width=120
         ).pack(
             pady=30

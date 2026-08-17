@@ -4,18 +4,20 @@ from application.use_cases.calculate_closed_load_quote import (
     CalculateClosedLoadQuote
 )
 from infrastructure.qualp.qualp_route_searcher import QualPRouteSearcher
-from presentation.desktop.menu_principal import MenuPrincipal
-from presentation.desktop.controllers.orcamento_pdf import OrcamentoPdfController
+from presentation.desktop.main_menu import MainMenu
+from presentation.desktop.controllers.quote_pdf_controller import (
+    QuotePdfController
+)
 from infrastructure.pdf.reportlab_quote_pdf_generator import (
     ReportLabQuotePdfGenerator
 )
 
-def criar_aplicacao():
+def create_application():
 
     ctk.set_appearance_mode("light")
     ctk.set_default_color_theme("blue")
 
-    janela = ctk.CTk()
+    window = ctk.CTk()
 
     route_searcher = QualPRouteSearcher()
 
@@ -25,30 +27,30 @@ def criar_aplicacao():
         )
     )
 
-    gerador_orcamento_pdf = (
+    quote_pdf_generator = (
         ReportLabQuotePdfGenerator()
     )
 
-    orcamento_pdf_controller = OrcamentoPdfController(
-        gerador_pdf=gerador_orcamento_pdf
+    quote_pdf_controller = QuotePdfController(
+        pdf_generator=quote_pdf_generator
     )
 
-    MenuPrincipal(
-        master=janela,
-        orcamento_callback=(
+    MainMenu(
+        master=window,
+        calculate_quote_callback=(
             calculate_closed_load_quote.execute
         ),
-        pdf_callback=orcamento_pdf_controller.gerar
+        generate_pdf_callback=quote_pdf_controller.generate
     )
 
-    return janela
+    return window
 
 
 def main():
 
-    janela = criar_aplicacao()
+    window = create_application()
 
-    janela.mainloop()
+    window.mainloop()
 
 
 if __name__ == "__main__":
