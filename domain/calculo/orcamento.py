@@ -1,5 +1,5 @@
 from domain.calculo.custo import calcular_custo
-from domain.impostos.rctrc import obter_aliquota_rctrc
+from domain.impostos.rctrc import get_rctrc_rate
 from domain.models.calculated_tax import CalculatedTax
 from domain.models.quote_calculation_result import (
     QuoteCalculationResult
@@ -18,7 +18,7 @@ def calcular_orcamento(
         valor_nota
     )
 
-    aliquota_rctrc = obter_aliquota_rctrc(
+    aliquota_rctrc = get_rctrc_rate(
         localizacao_origem,
         localizacao_destino
     )

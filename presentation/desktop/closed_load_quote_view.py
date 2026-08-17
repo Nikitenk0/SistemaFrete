@@ -4,7 +4,7 @@ from domain.models.quote_calculation_result import (
     QuoteCalculationResult
 )
 from domain.models.route_result import RouteResult
-from utils.conversao_monetaria import converter_valor_monetario
+from utils.conversao_monetaria import parse_monetary_value
 from application.exceptions import (
     InvalidQuoteDataError,
     QuoteCalculationError,
@@ -887,7 +887,7 @@ class ClosedLoadQuoteView:
             # mantém o texto original.
             try:
 
-                number = converter_valor_monetario(
+                number = parse_monetary_value(
                     text
                 )
 

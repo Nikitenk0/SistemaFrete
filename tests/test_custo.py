@@ -6,32 +6,32 @@ from domain.calculo.custo import calcular_custo
 class TestCalculoCusto(unittest.TestCase):
 
     def test_custo_no_limite(self):
-        resultado = calcular_custo(
+        result = calcular_custo(
             200000
         )
 
         self.assertEqual(
-            resultado,
+            result,
             350.0
         )
 
     def test_custo_abaixo_do_limite(self):
-        resultado = calcular_custo(
+        result = calcular_custo(
             199999
         )
 
         self.assertEqual(
-            resultado,
+            result,
             350.0
         )
 
     def test_custo_acima_do_limite(self):
-        resultado = calcular_custo(
+        result = calcular_custo(
             200001
         )
 
         self.assertEqual(
-            resultado,
+            result,
             550.0
         )
 

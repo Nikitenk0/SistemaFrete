@@ -9,11 +9,11 @@ class TestCalculoOrcamento(unittest.TestCase):
     def test_calcula_orcamento_com_rctrc(self):
 
         with patch(
-            "domain.calculo.orcamento.obter_aliquota_rctrc",
+            "domain.calculo.orcamento.get_rctrc_rate",
             return_value=0.10
-        ) as obter_aliquota:
+        ) as rctrc_rate_mock:
 
-            resultado = calcular_orcamento(
+            result = calcular_orcamento(
                 valor_nota=100000.0,
                 geral=1000.0,
                 pedagio=100.0,
@@ -21,42 +21,42 @@ class TestCalculoOrcamento(unittest.TestCase):
                 localizacao_destino="Maceió/Alagoas"
             )
 
-        obter_aliquota.assert_called_once_with(
+        rctrc_rate_mock.assert_called_once_with(
             "Rio Branco/Acre",
             "Maceió/Alagoas"
         )
 
         self.assertEqual(
-            resultado.valor_nota,
+            result.valor_nota,
             100000.0
         )
 
         self.assertEqual(
-            resultado.geral,
+            result.geral,
             1000.0
         )
 
         self.assertEqual(
-            resultado.pedagio,
+            result.pedagio,
             100.0
         )
 
         self.assertEqual(
-            resultado.custo,
+            result.custo,
             350.0
         )
 
         self.assertEqual(
-            resultado.subtotal,
+            result.subtotal,
             1450.0
         )
 
         self.assertEqual(
-            len(resultado.impostos),
+            len(result.impostos),
             1
         )
 
-        imposto = resultado.impostos[0]
+        imposto = result.impostos[0]
 
         self.assertEqual(
             imposto.nome,
@@ -79,12 +79,12 @@ class TestCalculoOrcamento(unittest.TestCase):
         )
 
         self.assertEqual(
-            resultado.total_impostos,
+            result.total_impostos,
             145.0
         )
 
         self.assertEqual(
-            resultado.total,
+            result.total,
             1595.0
         )
 

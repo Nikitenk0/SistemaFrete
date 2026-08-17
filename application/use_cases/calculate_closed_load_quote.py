@@ -9,7 +9,7 @@ from application.exceptions import (
     RouteSearchError,
 )
 from domain.calculo.orcamento import calcular_orcamento
-from utils.conversao_monetaria import converter_valor_monetario
+from utils.conversao_monetaria import parse_monetary_value
 
 class CalculateClosedLoadQuote:
 
@@ -29,7 +29,7 @@ class CalculateClosedLoadQuote:
     ) -> ClosedLoadQuoteResult:
 
         try:
-            valor_nota_convertido = converter_valor_monetario(
+            valor_nota_convertido = parse_monetary_value(
                 valor_nota
             )
 
@@ -57,11 +57,11 @@ class CalculateClosedLoadQuote:
             )
 
         try:
-            geral = converter_valor_monetario(
+            geral = parse_monetary_value(
                 route_result.geral
             )
 
-            pedagio = converter_valor_monetario(
+            pedagio = parse_monetary_value(
                 route_result.pedagio
             )
 

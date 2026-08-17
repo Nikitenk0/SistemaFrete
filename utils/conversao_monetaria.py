@@ -1,4 +1,4 @@
-def converter_valor_monetario(
+def parse_monetary_value(
     valor: str | int | float
 ) -> float:
 
@@ -15,19 +15,19 @@ def converter_valor_monetario(
             f"Valor monetário inválido: {valor}"
         )
 
-    texto = valor.strip()
+    text = valor.strip()
 
-    texto = texto.replace(
+    text = text.replace(
         "R$",
         ""
     )
 
     # Remove espaços, inclusive espaços especiais.
-    texto = "".join(
-        texto.split()
+    text = "".join(
+        text.split()
     )
 
-    if not texto:
+    if not text:
         raise ValueError(
             "Valor monetário vazio"
         )
@@ -40,14 +40,14 @@ def converter_valor_monetario(
     # 6143,83
     # ==========================================================
 
-    if "," in texto:
+    if "," in text:
 
-        texto = texto.replace(
+        text = text.replace(
             ".",
             ""
         )
 
-        texto = texto.replace(
+        text = text.replace(
             ",",
             "."
         )
@@ -63,26 +63,26 @@ def converter_valor_monetario(
 
     else:
 
-        quantidade_pontos = texto.count(
+        dot_count = text.count(
             "."
         )
 
-        if quantidade_pontos > 1:
+        if dot_count > 1:
 
-            texto = texto.replace(
+            text = text.replace(
                 ".",
                 ""
             )
 
-        elif quantidade_pontos == 1:
+        elif dot_count == 1:
 
-            parte_inteira, parte_decimal = texto.split(
+            integer_part, decimal_part = text.split(
                 ".",
                 maxsplit=1
             )
 
-            parte_inteira_sem_sinal = (
-                parte_inteira.lstrip("+-")
+            unsigned_integer_part = (
+                integer_part.lstrip("+-")
             )
 
             # Em valores monetários, três dígitos
@@ -90,24 +90,24 @@ def converter_valor_monetario(
             #
             # 150.000 -> 150000
             if (
-                parte_inteira_sem_sinal.isdigit()
-                and parte_decimal.isdigit()
-                and len(parte_decimal) == 3
+                unsigned_integer_part.isdigit()
+                and decimal_part.isdigit()
+                and len(decimal_part) == 3
             ):
 
-                texto = (
-                    parte_inteira
-                    + parte_decimal
+                text = (
+                    integer_part
+                    + decimal_part
                 )
 
     try:
 
         return float(
-            texto
+            text
         )
 
-    except ValueError as erro:
+    except ValueError as error:
 
         raise ValueError(
             f"Não foi possível converter o valor: {valor}"
-        ) from erro
+        ) from error

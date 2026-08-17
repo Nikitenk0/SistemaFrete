@@ -2,47 +2,47 @@ from config.estados import ESTADOS
 from config.impostos.matriz_rctrc import MATRIZ_RCTRC
 
 
-_ESTADOS_NORMALIZADOS = {
-    nome.casefold(): codigo
-    for nome, codigo in ESTADOS.items()
+_NORMALIZED_STATES = {
+    state_name.casefold(): state_code
+    for state_name, state_code in ESTADOS.items()
 }
 
 
-def normalizar_estado(estado: str) -> str:
+def normalize_state(estado: str) -> str:
 
     if not isinstance(estado, str):
         raise ValueError(
             f"Estado inválido: {estado}"
         )
 
-    estado_normalizado = estado.strip().casefold()
+    normalized_state = estado.strip().casefold()
 
-    if not estado_normalizado:
+    if not normalized_state:
         raise ValueError(
             "Estado não pode estar vazio"
         )
 
-    return estado_normalizado
+    return normalized_state
 
 
-def extrair_estado(localizacao: str) -> str:
+def extract_state(localizacao: str) -> str:
 
     if not isinstance(localizacao, str):
         raise ValueError(
             f"Localização inválida: {localizacao}"
         )
 
-    partes = localizacao.rsplit(
+    parts = localizacao.rsplit(
         "/",
         maxsplit=1
     )
 
-    if len(partes) != 2:
+    if len(parts) != 2:
         raise ValueError(
             f"Formato de localização inválido: {localizacao}"
         )
 
-    estado = partes[1].strip()
+    estado = parts[1].strip()
 
     if not estado:
         raise ValueError(
@@ -52,53 +52,53 @@ def extrair_estado(localizacao: str) -> str:
     return estado
 
 
-def obter_codigo_estado(estado: str) -> int:
+def get_state_code(estado: str) -> int:
 
-    estado_normalizado = normalizar_estado(
+    normalized_state = normalize_state(
         estado
     )
 
     try:
-        return _ESTADOS_NORMALIZADOS[
-            estado_normalizado
+        return _NORMALIZED_STATES[
+            normalized_state
         ]
 
-    except KeyError as erro:
+    except KeyError as error:
         raise ValueError(
             f"Estado não encontrado: {estado}"
-        ) from erro
+        ) from error
 
 
-def obter_aliquota_rctrc(
+def get_rctrc_rate(
     localizacao_origem: str,
     localizacao_destino: str
 ) -> float:
 
-    estado_origem = extrair_estado(
+    origin_state = extract_state(
         localizacao_origem
     )
 
-    estado_destino = extrair_estado(
+    destination_state = extract_state(
         localizacao_destino
     )
 
-    codigo_origem = obter_codigo_estado(
-        estado_origem
+    origin_state_code = get_state_code(
+        origin_state
     )
 
-    codigo_destino = obter_codigo_estado(
-        estado_destino
+    destination_state_code = get_state_code(
+        destination_state
     )
 
     # ESTADOS utiliza códigos de 1 a 27.
     # A matriz Python utiliza índices de 0 a 26.
-    indice_origem = codigo_origem - 1
-    indice_destino = codigo_destino - 1
+    origin_matrix_index = origin_state_code - 1
+    destination_matrix_index = destination_state_code - 1
 
     aliquota = MATRIZ_RCTRC[
-        indice_origem
+        origin_matrix_index
     ][
-        indice_destino
+        destination_matrix_index
     ]
 
     return float(
