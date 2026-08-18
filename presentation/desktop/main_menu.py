@@ -5,8 +5,10 @@ from tkinter import LEFT, RIGHT, BOTH, Y, X
 from presentation.desktop.styles import (
     WINDOW_HEIGHT,
     BUTTON_COLOR,
+    BUTTON_HOVER_COLOR,
     BACKGROUND_COLOR,
     MENU_COLOR,
+    TEXT_COLOR,
     BUTTON_FONT,
     TITLE_FONT,
     WINDOW_WIDTH,
@@ -31,6 +33,7 @@ class MainMenu:
         self.master = master
         self.calculate_quote_callback = calculate_quote_callback
         self.generate_pdf_callback = generate_pdf_callback
+        self.is_dark_mode = False
 
         self.master.title("Sistema")
         self.master.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
@@ -140,9 +143,62 @@ class MainMenu:
             fg_color=BUTTON_COLOR,
             text_color="white",
             font=BUTTON_FONT
-        ).pack(fill=X, pady=5, padx=10)
+        ).pack(
+            fill=X,
+            pady=5,
+            padx=10
+        )
+
+        # ==========================
+        # BOTÃO TEMA CLARO/ESCURO
+        # ==========================
+
+        self.theme_button = ctk.CTkButton(
+            self.menu,
+            text="Tema escuro",
+            command=self.toggle_appearance_mode,
+            fg_color=BUTTON_COLOR,
+            hover_color=BUTTON_HOVER_COLOR,
+            text_color=TEXT_COLOR,
+            font=BUTTON_FONT
+        )
+
+        self.theme_button.pack(
+            side="bottom",
+            fill=X,
+            padx=10,
+            pady=10
+        )
 
         self.show_home()
+
+    # ====================================
+
+    def toggle_appearance_mode(self):
+
+        if self.is_dark_mode:
+
+            ctk.set_appearance_mode(
+                "light"
+            )
+
+            self.theme_button.configure(
+                text="Tema escuro"
+            )
+
+            self.is_dark_mode = False
+
+        else:
+
+            ctk.set_appearance_mode(
+                "dark"
+            )
+
+            self.theme_button.configure(
+                text="Tema claro"
+            )
+
+            self.is_dark_mode = True
 
     # ====================================
 

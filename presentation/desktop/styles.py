@@ -2,10 +2,26 @@
 # CORES
 # =====================
 
-BACKGROUND_COLOR = "#FFFFFF"
-MENU_COLOR = "#2C3E50"
-BUTTON_COLOR = "#34495E"
-BUTTON_HOVER_COLOR = "#3E5870"
+BACKGROUND_COLOR = (
+    "#FFFFFF",
+    "#1E1E1E"
+)
+
+MENU_COLOR = (
+    "#2C3E50",
+    "#18222C"
+)
+
+BUTTON_COLOR = (
+    "#34495E",
+    "#2A3B4B"
+)
+
+BUTTON_HOVER_COLOR = (
+    "#3E5870",
+    "#354B60"
+)
+
 TEXT_COLOR = "#FFFFFF"
 
 # =====================
