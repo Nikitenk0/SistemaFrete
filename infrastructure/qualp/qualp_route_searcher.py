@@ -13,13 +13,20 @@ class QualPRouteSearcher:
 
     def __init__(
         self,
-        session: QualPSession | None = None
+        session: QualPSession | None = None,
+        email: str | None = None,
+        password: str | None = None,
+        headless: bool = False
     ):
         self._session = (
             session
             if session is not None
-            else QualPSession()
+            else QualPSession(
+                headless=headless
+            )
         )
+        self._email = email
+        self._password = password
 
     def search(
         self,
@@ -35,7 +42,9 @@ class QualPRouteSearcher:
 
             QualPAuthenticator.authenticate(
                 driver,
-                wait
+                wait,
+                self._email,
+                self._password
             )
 
             RouteForm.fill_and_calculate(

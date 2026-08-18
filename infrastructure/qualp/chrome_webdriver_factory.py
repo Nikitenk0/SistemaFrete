@@ -5,12 +5,24 @@ from selenium.webdriver.chrome.options import Options
 class ChromeWebDriverFactory:
 
     @staticmethod
-    def create():
+    def create(
+        headless: bool = False
+    ):
 
         options = Options()
 
-        #options.add_argument("--headless=new")
-        options.add_argument("--window-size=1920,1080")
-        options.add_argument("--disable-gpu")
+        if headless:
+            options.add_argument(
+                "--headless=new"
+            )
 
-        return webdriver.Chrome(options=options)
+        options.add_argument(
+            "--window-size=1920,1080"
+        )
+        options.add_argument(
+            "--disable-gpu"
+        )
+
+        return webdriver.Chrome(
+            options=options
+        )

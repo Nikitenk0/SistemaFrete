@@ -1,7 +1,9 @@
 import customtkinter as ctk
 
-from application.use_cases.calculate_closed_load_quote import (
-    CalculateClosedLoadQuote
+from config.app import (
+    QUALP_EMAIL,
+    QUALP_PASSWORD,
+    QUALP_HEADLESS,
 )
 from infrastructure.qualp.qualp_route_searcher import QualPRouteSearcher
 from presentation.desktop.main_menu import MainMenu
@@ -11,6 +13,10 @@ from presentation.desktop.controllers.quote_pdf_controller import (
 from infrastructure.pdf.reportlab_quote_pdf_generator import (
     ReportLabQuotePdfGenerator
 )
+from application.use_cases.calculate_closed_load_quote import (
+    CalculateClosedLoadQuote
+
+)
 
 def create_application():
 
@@ -19,7 +25,11 @@ def create_application():
 
     window = ctk.CTk()
 
-    route_searcher = QualPRouteSearcher()
+    route_searcher = QualPRouteSearcher(
+        email=QUALP_EMAIL,
+        password=QUALP_PASSWORD,
+        headless=QUALP_HEADLESS
+    )
 
     calculate_closed_load_quote = (
         CalculateClosedLoadQuote(

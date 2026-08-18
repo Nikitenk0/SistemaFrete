@@ -28,16 +28,6 @@ ENV/
 !.env.example
 
 # ======================================
-# Configurações locais
-# ======================================
-
-# Configuração de autenticação (não enviar ao Git)
-infrastructure/qualp/auth/config.py
-
-# Caso exista outro config local na raiz
-# config.py
-
-# ======================================
 # Logs
 # ======================================
 
