@@ -11,7 +11,9 @@ from application.exceptions import (
     RouteNotFoundError,
     RouteSearchError,
 )
-
+from presentation.desktop.async_task_runner import (
+    TkAsyncTaskRunner
+)
 
 class ClosedLoadQuoteView:
 
@@ -26,6 +28,11 @@ class ClosedLoadQuoteView:
         self.current_quote_result: QuoteCalculationResult | None = None
 
         self.parent = parent
+        self._is_calculating = False
+
+        self._task_runner = TkAsyncTaskRunner(
+            scheduler=parent
+        )
         self.calculate_quote_callback = calculate_quote_callback
         self.generate_pdf_callback = generate_pdf_callback
         self.navigate_back = navigate_back
@@ -529,6 +536,14 @@ class ClosedLoadQuoteView:
         event=None
     ):
 
+        if self._is_calculating:
+
+            self.calculate_button.configure(
+                state="disabled"
+            )
+
+            return
+
         valor_nota = self.txt_valor_nota.get().strip()
         origem = self.origin_entry.get().strip()
         destino = self.destination_entry.get().strip()
@@ -544,7 +559,6 @@ class ClosedLoadQuoteView:
             self.calculate_button.configure(
                 state="disabled"
             )
-
     # ==========================================================
     # CALCULAR ORÇAMENTO
     # ==========================================================
@@ -553,14 +567,23 @@ class ClosedLoadQuoteView:
 
         self.clear_results()
 
-        # Desabilita temporariamente para evitar múltiplos cliques.
-        self.calculate_button.configure(
-            state="disabled"
+        valor_nota = (
+            self.txt_valor_nota
+            .get()
+            .strip()
         )
 
-        valor_nota = self.txt_valor_nota.get().strip()
-        origem = self.origin_entry.get().strip()
-        destino = self.destination_entry.get().strip()
+        origem = (
+            self.origin_entry
+            .get()
+            .strip()
+        )
+
+        destino = (
+            self.destination_entry
+            .get()
+            .strip()
+        )
 
         try:
 
@@ -578,15 +601,17 @@ class ClosedLoadQuoteView:
 
             return
 
-        include_return_trip = self.include_return_trip_var.get()
+        include_return_trip = (
+            self.include_return_trip_var.get()
+        )
 
-        # ======================================================
-        # EXECUTA O CASO DE USO
-        # ======================================================
+        self._set_calculation_running(
+            True
+        )
 
-        try:
+        def calculate():
 
-            result = self.calculate_quote_callback(
+            return self.calculate_quote_callback(
                 valor_nota=valor_nota,
                 origem=origem,
                 destino=destino,
@@ -594,55 +619,30 @@ class ClosedLoadQuoteView:
                 calcular_volta=include_return_trip
             )
 
-        except InvalidQuoteDataError:
+        self._task_runner.run(
+            task=calculate,
+            on_success=self._handle_calculation_success,
+            on_error=self._handle_calculation_error
+        )
 
-            self.total_value_label.configure(
-                text="Dados do orçamento inválidos"
-            )
+    def _handle_calculation_success(
+        self,
+        result
+    ) -> None:
 
-            self.validate_fields()
-
-            return
-
-        except RouteNotFoundError:
-
-            self.total_value_label.configure(
-                text="Nenhuma rota encontrada"
-            )
-
-            self.validate_fields()
-
-            return
-
-        except RouteSearchError:
-
-            self.total_value_label.configure(
-                text="Erro ao pesquisar rota"
-            )
-
-            self.validate_fields()
-
-            return
-
-        except QuoteCalculationError:
-
-            self.total_value_label.configure(
-                text="Erro ao calcular orçamento"
-            )
-
-            self.validate_fields()
-
+        if not self._view_is_active():
             return
 
         route_result = result.route_result
         quote_result = result.quote_result
 
-        self.current_route_result = route_result
-        self.current_quote_result = quote_result
+        self.current_route_result = (
+            route_result
+        )
 
-        # ======================================================
-        # ATUALIZA RESULTADOS DA ROTA
-        # ======================================================
+        self.current_quote_result = (
+            quote_result
+        )
 
         self.origin_value_label.configure(
             text=route_result.origem
@@ -668,19 +668,11 @@ class ClosedLoadQuoteView:
             )
         )
 
-        # ======================================================
-        # ATUALIZA CUSTO
-        # ======================================================
-
         self.lbl_custo.configure(
             text=self.format_currency(
                 quote_result.custo
             )
         )
-
-        # ======================================================
-        # ATUALIZA IMPOSTO
-        # ======================================================
 
         self.tax_value_label.configure(
             text=self.format_currency(
@@ -688,26 +680,142 @@ class ClosedLoadQuoteView:
             )
         )
 
-        # ======================================================
-        # ATUALIZA TOTAL
-        # ======================================================
-
         self.total_value_label.configure(
             text=self.format_currency(
                 quote_result.total
             )
         )
 
-        # ======================================================
-        # HABILITA BOTÕES
-        # ======================================================
-
         self.pdf_button.configure(
             state="normal"
         )
 
-        self.validate_fields()
+        self._set_calculation_running(
+            False
+        )
 
+
+    def _handle_calculation_error(
+        self,
+        error: Exception
+    ) -> None:
+
+        if not self._view_is_active():
+            return
+
+        if isinstance(
+            error,
+            InvalidQuoteDataError
+        ):
+
+            message = (
+                "Dados do orçamento inválidos"
+            )
+
+        elif isinstance(
+            error,
+            RouteNotFoundError
+        ):
+
+            message = (
+                "Nenhuma rota encontrada"
+            )
+
+        elif isinstance(
+            error,
+            RouteSearchError
+        ):
+
+            message = (
+                "Erro ao pesquisar rota"
+            )
+
+        elif isinstance(
+            error,
+            QuoteCalculationError
+        ):
+
+            message = (
+                "Erro ao calcular orçamento"
+            )
+
+        else:
+
+            self._set_calculation_running(
+                False
+            )
+
+            raise error
+
+        self.total_value_label.configure(
+            text=message
+        )
+
+        self._set_calculation_running(
+            False
+        )
+
+
+    def _set_calculation_running(
+        self,
+        is_running: bool
+    ) -> None:
+
+        self._is_calculating = (
+            is_running
+        )
+
+        entry_state = (
+            "disabled"
+            if is_running
+            else "normal"
+        )
+
+        self.origin_entry.configure(
+            state=entry_state
+        )
+
+        self.destination_entry.configure(
+            state=entry_state
+        )
+
+        self.txt_valor_nota.configure(
+            state=entry_state
+        )
+
+        self.axle_count_combobox.configure(
+            state=(
+                "disabled"
+                if is_running
+                else "readonly"
+            )
+        )
+
+        self.round_trip_switch.configure(
+            state=entry_state
+        )
+
+        self.calculate_button.configure(
+            text=(
+                "Pesquisando..."
+                if is_running
+                else "Pesquisar"
+            ),
+            state="disabled"
+        )
+
+        if not is_running:
+
+            self.validate_fields()
+
+
+    def _view_is_active(
+        self
+    ) -> bool:
+
+        return bool(
+            self.main_frame.winfo_exists()
+        )
     # ==========================================================
     # GERAR PDF
     # ==========================================================
