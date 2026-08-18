@@ -1,3 +1,4 @@
+from decimal import Decimal
 from domain.calculo.custos import (
     LIMITE_VALOR_NOTA,
     CUSTO_ATE_LIMITE,
@@ -6,8 +7,8 @@ from domain.calculo.custos import (
 
 
 def calcular_custo(
-    valor_nota: float
-) -> float:
+    valor_nota: Decimal
+) -> Decimal:
 
     if valor_nota <= LIMITE_VALOR_NOTA:
         return CUSTO_ATE_LIMITE

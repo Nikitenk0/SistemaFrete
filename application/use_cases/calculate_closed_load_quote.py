@@ -1,3 +1,4 @@
+from decimal import Decimal
 from application.dtos.closed_load_quote_result import (
     ClosedLoadQuoteResult
 )
@@ -21,7 +22,7 @@ class CalculateClosedLoadQuote:
 
     def execute(
         self,
-        valor_nota: str | int | float,
+        valor_nota: str | int | float | Decimal,
         origem: str,
         destino: str,
         quantidade_eixos: int,

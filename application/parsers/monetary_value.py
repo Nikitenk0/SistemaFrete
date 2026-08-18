@@ -1,14 +1,22 @@
+from decimal import Decimal, InvalidOperation
+
+
 def parse_monetary_value(
-    valor: str | int | float
-) -> float:
+    valor: str | int | float | Decimal
+) -> Decimal:
 
     if isinstance(valor, bool):
         raise ValueError(
             f"Valor monetário inválido: {valor}"
         )
 
+    if isinstance(valor, Decimal):
+        return valor
+
     if isinstance(valor, (int, float)):
-        return float(valor)
+        return Decimal(
+            str(valor)
+        )
 
     if not isinstance(valor, str):
         raise ValueError(
@@ -102,11 +110,11 @@ def parse_monetary_value(
 
     try:
 
-        return float(
+        return Decimal(
             text
         )
 
-    except ValueError as error:
+    except InvalidOperation as error:
 
         raise ValueError(
             f"Não foi possível converter o valor: {valor}"

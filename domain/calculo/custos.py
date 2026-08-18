@@ -1,5 +1,14 @@
-LIMITE_VALOR_NOTA = 200_000
+from decimal import Decimal
 
-CUSTO_ATE_LIMITE = 350.00
-CUSTO_ACIMA_LIMITE = 550.00
 
+LIMITE_VALOR_NOTA = Decimal(
+    "200000"
+)
+
+CUSTO_ATE_LIMITE = Decimal(
+    "350.00"
+)
+
+CUSTO_ACIMA_LIMITE = Decimal(
+    "550.00"
+)

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from domain.impostos.estados import ESTADOS
 from domain.impostos.matriz_rctrc import MATRIZ_RCTRC
 
@@ -72,7 +73,7 @@ def get_state_code(estado: str) -> int:
 def get_rctrc_rate(
     localizacao_origem: str,
     localizacao_destino: str
-) -> float:
+) -> Decimal:
 
     origin_state = extract_state(
         localizacao_origem
@@ -101,6 +102,6 @@ def get_rctrc_rate(
         destination_matrix_index
     ]
 
-    return float(
-        aliquota
+    return Decimal(
+        str(aliquota)
     )

@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-
+from decimal import Decimal
 from domain.impostos.rctrc import get_rctrc_rate
 
 
@@ -25,7 +25,7 @@ class TestRCTRC(unittest.TestCase):
 
         self.assertEqual(
             result,
-            0.123
+            Decimal("0.123")
         )
 
     def test_rejeita_localizacao_sem_estado(self):

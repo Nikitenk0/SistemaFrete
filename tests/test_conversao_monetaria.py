@@ -1,5 +1,5 @@
 import unittest
-
+from decimal import Decimal
 from application.parsers.monetary_value import parse_monetary_value
 
 
@@ -12,7 +12,7 @@ class TestConversaoMonetaria(unittest.TestCase):
 
         self.assertEqual(
             result,
-            6143.83
+            Decimal("6143.83")
         )
 
     def test_converte_separador_de_milhar(self):
@@ -22,12 +22,12 @@ class TestConversaoMonetaria(unittest.TestCase):
 
         self.assertEqual(
             result,
-            150000.0
+            Decimal("150000")
         )
 
     def test_converte_numero_direto(self):
         result = parse_monetary_value(
-            150000
+            Decimal("150000")
         )
 
         self.assertEqual(

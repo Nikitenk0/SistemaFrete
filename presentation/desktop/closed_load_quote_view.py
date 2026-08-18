@@ -1,5 +1,5 @@
 import customtkinter as ctk
-
+from decimal import Decimal
 from domain.models.quote_calculation_result import (
     QuoteCalculationResult
 )
@@ -823,18 +823,17 @@ class ClosedLoadQuoteView:
     # ==========================================================
 
     @staticmethod
-    def format_currency(value):
+    def format_currency(
+        value: str | int | float | Decimal
+    ) -> str:
 
         try:
 
-            number = float(
+            number = parse_monetary_value(
                 value
             )
 
-        except (
-            TypeError,
-            ValueError
-        ):
+        except ValueError:
 
             return str(
                 value
@@ -850,7 +849,6 @@ class ClosedLoadQuoteView:
         return (
             f"R$ {formatted_value}"
         )
-
     # ==========================================================
     # FORMATA VALORES RETORNADOS PELA PESQUISA
     # ==========================================================

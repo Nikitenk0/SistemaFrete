@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-
+from decimal import Decimal
 from domain.calculo.orcamento import calcular_orcamento
 
 
@@ -10,13 +10,13 @@ class TestCalculoOrcamento(unittest.TestCase):
 
         with patch(
             "domain.calculo.orcamento.get_rctrc_rate",
-            return_value=0.10
+            return_value=Decimal("0.10")
         ) as rctrc_rate_mock:
 
             result = calcular_orcamento(
-                valor_nota=100000.0,
-                geral=1000.0,
-                pedagio=100.0,
+                valor_nota=Decimal("100000.00"),
+                geral=Decimal("1000.00"),
+                pedagio=Decimal("100.00"),
                 localizacao_origem="Rio Branco/Acre",
                 localizacao_destino="Maceió/Alagoas"
             )
@@ -28,27 +28,27 @@ class TestCalculoOrcamento(unittest.TestCase):
 
         self.assertEqual(
             result.valor_nota,
-            100000.0
+            Decimal("100000.00")
         )
 
         self.assertEqual(
             result.geral,
-            1000.0
+            Decimal("1000.00")
         )
 
         self.assertEqual(
             result.pedagio,
-            100.0
+            Decimal("100.00")
         )
 
         self.assertEqual(
             result.custo,
-            350.0
+            Decimal("350.00")
         )
 
         self.assertEqual(
             result.subtotal,
-            1450.0
+            Decimal("1450.00")
         )
 
         self.assertEqual(
@@ -65,27 +65,27 @@ class TestCalculoOrcamento(unittest.TestCase):
 
         self.assertEqual(
             imposto.aliquota,
-            0.10
+            Decimal("0.10")
         )
 
         self.assertEqual(
             imposto.base_calculo,
-            1450.0
+            Decimal("1450.00")
         )
 
         self.assertEqual(
             imposto.valor,
-            145.0
+            Decimal("145.0000")
         )
 
         self.assertEqual(
             result.total_impostos,
-            145.0
+            Decimal("145.0000")
         )
 
         self.assertEqual(
             result.total,
-            1595.0
+            Decimal("1595.0000")
         )
 
 

@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-
+from decimal import Decimal
 from application.exceptions import (
     InvalidQuoteDataError,
     QuoteCalculationError,
@@ -68,13 +68,13 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
         )
 
         quote_calculation_result = QuoteCalculationResult(
-            valor_nota=100000.0,
-            geral=1000.0,
-            pedagio=100.0,
-            custo=350.0,
-            subtotal=1450.0,
+            valor_nota=Decimal("100000.00"),
+            geral=Decimal("1000.00"),
+            pedagio=Decimal("100.00"),
+            custo=Decimal("350.00"),
+            subtotal=Decimal("1450.00"),
             impostos=(),
-            total=1450.0
+            total=Decimal("1450.00")
         )
 
         with patch(
@@ -105,9 +105,9 @@ class TestCalcularOrcamentoFechado(unittest.TestCase):
         )
 
         calculate_quote_mock.assert_called_once_with(
-            valor_nota=100000.0,
-            geral=1000.0,
-            pedagio=100.0,
+            valor_nota=Decimal("100000.00"),
+            geral=Decimal("1000.00"),
+            pedagio=Decimal("100.00"),
             localizacao_origem="Rio Branco/Acre",
             localizacao_destino="Maceió/Alagoas"
         )

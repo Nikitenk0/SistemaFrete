@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from decimal import Decimal
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
@@ -249,7 +249,9 @@ def generate_quote_pdf(
 
     pdf.save()
 
-def format_currency(value: float) -> str:
+def format_currency(
+        value: Decimal
+    ) -> str:
 
     formatted_value = (
         f"{value:,.2f}"

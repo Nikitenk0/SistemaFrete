@@ -1,3 +1,4 @@
+from decimal import Decimal
 from domain.calculo.custo import calcular_custo
 from domain.impostos.rctrc import get_rctrc_rate
 from domain.models.calculated_tax import CalculatedTax
@@ -7,9 +8,9 @@ from domain.models.quote_calculation_result import (
 
 
 def calcular_orcamento(
-    valor_nota: float,
-    geral: float,
-    pedagio: float,
+    valor_nota: Decimal,
+    geral: Decimal,
+    pedagio: Decimal,
     localizacao_origem: str,
     localizacao_destino: str
 ) -> QuoteCalculationResult:
