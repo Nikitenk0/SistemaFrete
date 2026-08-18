@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 from application.dtos.closed_load_quote_result import (
     ClosedLoadQuoteResult
@@ -11,6 +12,10 @@ from application.exceptions import (
 )
 from domain.calculo.orcamento import calcular_orcamento
 from application.parsers.monetary_value import parse_monetary_value
+
+logger = logging.getLogger(
+    "sistemafrete.application.calculate_closed_load_quote"
+)
 
 class CalculateClosedLoadQuote:
 
@@ -48,6 +53,11 @@ class CalculateClosedLoadQuote:
             )
 
         except Exception as error:
+
+            logger.exception(
+                "Falha técnica ao pesquisar rota"
+            )
+
             raise RouteSearchError(
                 "Não foi possível pesquisar a rota"
             ) from error
@@ -75,6 +85,11 @@ class CalculateClosedLoadQuote:
             )
 
         except Exception as error:
+
+            logger.exception(
+                "Falha técnica ao calcular orçamento"
+            )
+
             raise QuoteCalculationError(
                 "Não foi possível calcular o orçamento"
             ) from error

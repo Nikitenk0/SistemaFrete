@@ -1,5 +1,5 @@
 import customtkinter as ctk
-
+import logging
 from config.app import (
     QUALP_EMAIL,
     QUALP_PASSWORD,
@@ -19,6 +19,28 @@ from application.use_cases.calculate_closed_load_quote import (
 from application.use_cases.generate_quote_pdf import (
     GenerateQuotePdf
 )
+from infrastructure.logging_config import (
+    configure_logging
+)
+
+logger = logging.getLogger(
+    "sistemafrete"
+)
+
+def _report_callback_exception(
+    exception_type,
+    exception_value,
+    exception_traceback
+) -> None:
+
+    logger.critical(
+        "Erro não tratado em callback da interface",
+        exc_info=(
+            exception_type,
+            exception_value,
+            exception_traceback
+        )
+    )
 
 def create_application():
 
@@ -26,7 +48,9 @@ def create_application():
     ctk.set_default_color_theme("blue")
 
     window = ctk.CTk()
-
+    window.report_callback_exception = (
+        _report_callback_exception
+    )
     route_searcher = QualPRouteSearcher(
         email=QUALP_EMAIL,
         password=QUALP_PASSWORD,
@@ -51,10 +75,6 @@ def create_application():
         generate_quote_pdf=generate_quote_pdf
     )
 
-    quote_pdf_controller = QuotePdfController(
-        generate_quote_pdf=generate_quote_pdf
-    )
-
     MainMenu(
         master=window,
         calculate_quote_callback=(
@@ -67,6 +87,12 @@ def create_application():
 
 
 def main():
+
+    configure_logging()
+
+    logger.info(
+        "Aplicação iniciada"
+    )
 
     window = create_application()
 

@@ -1,3 +1,4 @@
+import logging
 from application.dtos.quote_document_data import (
     QuoteDocumentData
 )
@@ -8,6 +9,9 @@ from application.ports.quote_pdf_generator import (
     QuotePdfGenerator
 )
 
+logger = logging.getLogger(
+    "sistemafrete.application.generate_quote_pdf"
+)
 
 class GenerateQuotePdf:
 
@@ -31,6 +35,10 @@ class GenerateQuotePdf:
             )
 
         except Exception as error:
+
+            logger.exception(
+                "Falha técnica ao gerar PDF"
+            )
 
             raise QuotePdfGenerationError(
                 "Não foi possível gerar o PDF"
