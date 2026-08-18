@@ -1,99 +1,377 @@
 from datetime import datetime
 from decimal import Decimal
+
 from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
+from reportlab.pdfgen import canvas
 
-from domain.models.quote_calculation_result import (
-    QuoteCalculationResult
+from application.dtos.quote_document_data import (
+    QuoteDocumentData
 )
-from application.dtos.route_result import RouteResult
-
-def generate_quote_pdf(
-    route_result: RouteResult,
-    quote_result: QuoteCalculationResult,
-    axle_count: int,
-    include_return_trip: bool,
-    path: str
-):
-    """
-
-        Gera o PDF de um orçamento a partir dos resultados
-        da rota e do cálculo financeiro.
-
-    """
-
-    pdf = canvas.Canvas(
-        path,
-        pagesize=A4
-    )
-
-    width, height = A4
-
-    # ==========================================================
-    # TÍTULO
-    # ==========================================================
-
-    pdf.setFont(
-        "Helvetica-Bold",
-        20
-    )
-
-    pdf.drawCentredString(
-        width / 2,
-        height - 3 * cm,
-        "ORÇAMENTO"
-    )
-
-    # ==========================================================
-    # DATA
-    # ==========================================================
-
-    pdf.setFont(
-        "Helvetica",
-        10
-    )
-
-    generated_at = datetime.now().strftime(
-        "%d/%m/%Y %H:%M"
-    )
-
-    pdf.drawRightString(
-        width - 2 * cm,
-        height - 4 * cm,
-        f"Data: {generated_at}"
-    )
-
-    # ==========================================================
-    # LINHA
-    # ==========================================================
-
-    pdf.line(
-        2 * cm,
-        height - 4.5 * cm,
-        width - 2 * cm,
-        height - 4.5 * cm
-    )
-    # ==========================================================
-    # DADOS DO ORÇAMENTO
-    # ==========================================================
-
-    y = height - 6 * cm
-
-    label_x = 3 * cm
-    value_x = 7 * cm
-
-    line_spacing = 0.9 * cm
 
 
-    def draw_line(
+class ReportLabQuotePdfGenerator:
+
+    def generate(
+        self,
+        document: QuoteDocumentData,
+        path: str
+    ) -> None:
+
+        pdf = canvas.Canvas(
+            path,
+            pagesize=A4
+        )
+
+        width, height = A4
+
+        y = self._draw_header(
+            pdf=pdf,
+            document=document,
+            width=width,
+            height=height
+        )
+
+        y = self._draw_customer_section(
+            pdf=pdf,
+            document=document,
+            width=width,
+            y=y
+        )
+
+        y = self._draw_route_section(
+            pdf=pdf,
+            document=document,
+            width=width,
+            y=y
+        )
+
+        y = self._draw_financial_section(
+            pdf=pdf,
+            document=document,
+            width=width,
+            y=y
+        )
+
+        self._draw_total(
+            pdf=pdf,
+            document=document,
+            width=width,
+            y=y
+        )
+
+        pdf.save()
+
+    def _draw_header(
+        self,
+        pdf,
+        document: QuoteDocumentData,
+        width,
+        height
+    ):
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            20
+        )
+
+        pdf.drawCentredString(
+            width / 2,
+            height - 3 * cm,
+            "ORÇAMENTO"
+        )
+
+        issued_at = (
+            document.issued_at
+            if document.issued_at is not None
+            else datetime.now()
+        )
+
+        pdf.setFont(
+            "Helvetica",
+            10
+        )
+
+        pdf.drawRightString(
+            width - 2 * cm,
+            height - 4 * cm,
+            (
+                "Data: "
+                + issued_at.strftime(
+                    "%d/%m/%Y %H:%M"
+                )
+            )
+        )
+
+        if document.quote_number:
+
+            pdf.drawString(
+                2 * cm,
+                height - 4 * cm,
+                (
+                    "Orçamento: "
+                    + document.quote_number
+                )
+            )
+
+        pdf.line(
+            2 * cm,
+            height - 4.5 * cm,
+            width - 2 * cm,
+            height - 4.5 * cm
+        )
+
+        return height - 6 * cm
+
+    def _draw_customer_section(
+        self,
+        pdf,
+        document: QuoteDocumentData,
+        width,
+        y
+    ):
+
+        customer = document.customer
+
+        if customer is None:
+            return y
+
+        if (
+            not customer.name
+            and not customer.cnpj
+        ):
+            return y
+
+        y = self._draw_section_title(
+            pdf=pdf,
+            title="CLIENTE",
+            width=width,
+            y=y
+        )
+
+        if customer.name:
+
+            y = self._draw_line(
+                pdf=pdf,
+                y=y,
+                label="Nome:",
+                value=customer.name
+            )
+
+        if customer.cnpj:
+
+            y = self._draw_line(
+                pdf=pdf,
+                y=y,
+                label="CNPJ:",
+                value=customer.cnpj
+            )
+
+        return y - 0.3 * cm
+
+    def _draw_route_section(
+        self,
+        pdf,
+        document: QuoteDocumentData,
+        width,
+        y
+    ):
+
+        route = document.route_result
+        quote = document.quote_result
+
+        y = self._draw_section_title(
+            pdf=pdf,
+            title="ROTA",
+            width=width,
+            y=y
+        )
+
+        y = self._draw_line(
+            pdf=pdf,
+            y=y,
+            label="Origem:",
+            value=route.origem
+        )
+
+        y = self._draw_line(
+            pdf=pdf,
+            y=y,
+            label="Destino:",
+            value=route.destino
+        )
+
+        y = self._draw_line(
+            pdf=pdf,
+            y=y,
+            label="Distância:",
+            value=route.distancia
+        )
+
+        y = self._draw_line(
+            pdf=pdf,
+            y=y,
+            label="Pedágio:",
+            value=self._format_currency(
+                quote.pedagio
+            )
+        )
+
+        y = self._draw_line(
+            pdf=pdf,
+            y=y,
+            label="Quant. de Eixos:",
+            value=document.axle_count
+        )
+
+        return_trip_text = (
+            "Sim"
+            if document.include_return_trip
+            else "Não"
+        )
+
+        y = self._draw_line(
+            pdf=pdf,
+            y=y,
+            label="Calcular Volta:",
+            value=return_trip_text
+        )
+
+        return y - 0.3 * cm
+
+    def _draw_financial_section(
+        self,
+        pdf,
+        document: QuoteDocumentData,
+        width,
+        y
+    ):
+
+        quote = document.quote_result
+
+        y = self._draw_section_title(
+            pdf=pdf,
+            title="VALORES",
+            width=width,
+            y=y
+        )
+
+        y = self._draw_line(
+            pdf=pdf,
+            y=y,
+            label="Valor da Nota:",
+            value=self._format_currency(
+                quote.valor_nota
+            )
+        )
+
+        y = self._draw_line(
+            pdf=pdf,
+            y=y,
+            label="Geral:",
+            value=self._format_currency(
+                quote.geral
+            )
+        )
+
+        y = self._draw_line(
+            pdf=pdf,
+            y=y,
+            label="Custo:",
+            value=self._format_currency(
+                quote.custo
+            )
+        )
+
+        for tax in quote.impostos:
+
+            y = self._draw_line(
+                pdf=pdf,
+                y=y,
+                label=f"{tax.nome}:",
+                value=self._format_currency(
+                    tax.valor
+                )
+            )
+
+        return y
+
+    def _draw_total(
+        self,
+        pdf,
+        document: QuoteDocumentData,
+        width,
+        y
+    ) -> None:
+
+        quote = document.quote_result
+
+        y -= 0.4 * cm
+
+        pdf.line(
+            3 * cm,
+            y + 0.3 * cm,
+            width - 3 * cm,
+            y + 0.3 * cm
+        )
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            14
+        )
+
+        pdf.drawString(
+            3 * cm,
+            y,
+            "TOTAL:"
+        )
+
+        pdf.drawString(
+            7 * cm,
+            y,
+            self._format_currency(
+                quote.total
+            )
+        )
+
+    @staticmethod
+    def _draw_section_title(
+        pdf,
+        title: str,
+        width,
+        y
+    ):
+
+        pdf.setFont(
+            "Helvetica-Bold",
+            11
+        )
+
+        pdf.drawString(
+            3 * cm,
+            y,
+            title
+        )
+
+        pdf.line(
+            3 * cm,
+            y - 0.15 * cm,
+            width - 3 * cm,
+            y - 0.15 * cm
+        )
+
+        return y - 0.7 * cm
+
+    @staticmethod
+    def _draw_line(
+        pdf,
+        y,
         label,
         value,
         label_font="Helvetica-Bold",
         value_font="Helvetica",
         font_size=12
     ):
-        nonlocal y
 
         pdf.setFont(
             label_font,
@@ -101,7 +379,7 @@ def generate_quote_pdf(
         )
 
         pdf.drawString(
-            label_x,
+            3 * cm,
             y,
             label
         )
@@ -112,171 +390,23 @@ def generate_quote_pdf(
         )
 
         pdf.drawString(
-            value_x,
+            7 * cm,
             y,
             str(value)
         )
 
-        y -= line_spacing
+        return y - 0.9 * cm
 
-
-    # ==========================================================
-    # DADOS DA ROTA
-    # ==========================================================
-
-    draw_line(
-        "Origem:",
-        route_result.origem
-    )
-
-    draw_line(
-        "Destino:",
-        route_result.destino
-    )
-
-    draw_line(
-        "Distância:",
-        route_result.distancia
-    )
-
-    draw_line(
-        "Pedágio:",
-        format_currency(
-            quote_result.pedagio
-        )
-    )
-
-    draw_line(
-        "Quant. de Eixos:",
-        axle_count
-    )
-
-    return_trip_text = (
-        "Sim"
-        if include_return_trip
-        else "Não"
-    )
-
-    draw_line(
-        "Calcular Volta:",
-        return_trip_text
-    )
-
-
-    # ==========================================================
-    # DADOS FINANCEIROS
-    # ==========================================================
-
-    y -= 0.5 * cm
-
-    pdf.line(
-        label_x,
-        y + 0.3 * cm,
-        width - 3 * cm,
-        y + 0.3 * cm
-    )
-
-    draw_line(
-        "Valor da Nota:",
-        format_currency(
-            quote_result.valor_nota
-        )
-    )
-
-    draw_line(
-        "Geral:",
-        format_currency(
-            quote_result.geral
-        )
-    )
-
-    draw_line(
-        "Custo:",
-        format_currency(
-            quote_result.custo
-        )
-    )
-
-
-    # ==========================================================
-    # IMPOSTOS
-    # ==========================================================
-
-    for tax in quote_result.impostos:
-
-        draw_line(
-            f"{tax.nome}:",
-            format_currency(
-                tax.valor
-            )
-        )
-
-
-    # ==========================================================
-    # TOTAL
-    # ==========================================================
-
-    y -= 0.5 * cm
-
-    pdf.line(
-        label_x,
-        y + 0.3 * cm,
-        width - 3 * cm,
-        y + 0.3 * cm
-    )
-
-    pdf.setFont(
-        "Helvetica-Bold",
-        14
-    )
-
-    pdf.drawString(
-        label_x,
-        y,
-        "TOTAL:"
-    )
-
-    pdf.drawString(
-        value_x,
-        y,
-        format_currency(
-            quote_result.total
-        )
-    )
-    # ==========================================================
-    # FINALIZA
-    # ==========================================================
-
-    pdf.save()
-
-def format_currency(
+    @staticmethod
+    def _format_currency(
         value: Decimal
     ) -> str:
 
-    formatted_value = (
-        f"{value:,.2f}"
-        .replace(",", "X")
-        .replace(".", ",")
-        .replace("X", ".")
-    )
-
-    return f"R$ {formatted_value}"
-
-class ReportLabQuotePdfGenerator:
-
-    def generate(
-        self,
-        route_result: RouteResult,
-        quote_result: QuoteCalculationResult,
-        axle_count: int,
-        include_return_trip: bool,
-        path: str
-    ) -> None:
-
-        generate_quote_pdf(
-            route_result=route_result,
-            quote_result=quote_result,
-            axle_count=axle_count,
-            include_return_trip=include_return_trip,
-            path=path
+        formatted_value = (
+            f"{value:,.2f}"
+            .replace(",", "X")
+            .replace(".", ",")
+            .replace("X", ".")
         )
+
+        return f"R$ {formatted_value}"

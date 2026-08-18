@@ -7,7 +7,9 @@ from domain.models.quote_calculation_result import (
     QuoteCalculationResult
 )
 from application.dtos.route_result import RouteResult
-
+from application.dtos.quote_document_data import (
+    QuoteDocumentData
+)
 
 class QuotePdfController:
 
@@ -37,13 +39,17 @@ class QuotePdfController:
         if not path:
             return
 
+        document = QuoteDocumentData(
+            route_result=route_result,
+            quote_result=quote_result,
+            axle_count=axle_count,
+            include_return_trip=include_return_trip
+        )
+
         try:
 
             self._pdf_generator.generate(
-                route_result=route_result,
-                quote_result=quote_result,
-                axle_count=axle_count,
-                include_return_trip=include_return_trip,
+                document=document,
                 path=path
             )
 
