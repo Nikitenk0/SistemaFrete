@@ -1,7 +1,10 @@
 from tkinter import filedialog, messagebox
 
-from application.ports.quote_pdf_generator import (
-    QuotePdfGenerator
+from application.exceptions import (
+    QuotePdfGenerationError
+)
+from application.use_cases.generate_quote_pdf import (
+    GenerateQuotePdf
 )
 from domain.models.quote_calculation_result import (
     QuoteCalculationResult
@@ -15,9 +18,9 @@ class QuotePdfController:
 
     def __init__(
         self,
-        pdf_generator: QuotePdfGenerator
+        generate_quote_pdf: GenerateQuotePdf
     ):
-        self._pdf_generator = pdf_generator
+        self._generate_quote_pdf = generate_quote_pdf
 
     def generate(
         self,
@@ -48,19 +51,16 @@ class QuotePdfController:
 
         try:
 
-            self._pdf_generator.generate(
+            self._generate_quote_pdf.execute(
                 document=document,
                 path=path
             )
 
-        except Exception as error:
+        except QuotePdfGenerationError as error:
 
             messagebox.showerror(
                 "Erro",
-                (
-                    "Não foi possível gerar o PDF."
-                    f"\n\n{error}"
-                )
+                str(error)
             )
 
             return

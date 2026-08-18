@@ -16,3 +16,6 @@ class RouteSearchError(ApplicationError):
 
 class QuoteCalculationError(ApplicationError):
     """Falha ao processar os dados e calcular o orçamento."""
+
+class QuotePdfGenerationError(ApplicationError):
+    """Falha ao gerar o documento PDF do orçamento."""

@@ -729,27 +729,14 @@ class ClosedLoadQuoteView:
 
             return
 
-        try:
-
-            self.generate_pdf_callback(
-                self.current_route_result,
-                self.current_quote_result,
-                axle_count=int(
-                    self.axle_count_combobox.get()
-                ),
-                include_return_trip=self.include_return_trip_var.get()
-            )
-
-        except Exception as error:
-
-            print(
-                "ERRO AO GERAR PDF:",
-                repr(error)
-            )
-
-            self.total_value_label.configure(
-                text="Erro ao gerar PDF"
-            )
+        self.generate_pdf_callback(
+            self.current_route_result,
+            self.current_quote_result,
+            axle_count=int(
+                self.axle_count_combobox.get()
+            ),
+            include_return_trip=self.include_return_trip_var.get()
+        )
 
     # ==========================================================
     # LIMPAR RESULTADOS

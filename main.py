@@ -15,7 +15,9 @@ from infrastructure.pdf.reportlab_quote_pdf_generator import (
 )
 from application.use_cases.calculate_closed_load_quote import (
     CalculateClosedLoadQuote
-
+)
+from application.use_cases.generate_quote_pdf import (
+    GenerateQuotePdf
 )
 
 def create_application():
@@ -41,8 +43,16 @@ def create_application():
         ReportLabQuotePdfGenerator()
     )
 
-    quote_pdf_controller = QuotePdfController(
+    generate_quote_pdf = GenerateQuotePdf(
         pdf_generator=quote_pdf_generator
+    )
+
+    quote_pdf_controller = QuotePdfController(
+        generate_quote_pdf=generate_quote_pdf
+    )
+
+    quote_pdf_controller = QuotePdfController(
+        generate_quote_pdf=generate_quote_pdf
     )
 
     MainMenu(

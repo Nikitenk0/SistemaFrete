@@ -178,7 +178,7 @@ class ReportLabQuotePdfGenerator:
     ):
 
         route = document.route_result
-        quote = document.quote_result
+
 
         y = self._draw_section_title(
             pdf=pdf,
@@ -206,15 +206,6 @@ class ReportLabQuotePdfGenerator:
             y=y,
             label="Distância:",
             value=route.distancia
-        )
-
-        y = self._draw_line(
-            pdf=pdf,
-            y=y,
-            label="Pedágio:",
-            value=self._format_currency(
-                quote.pedagio
-            )
         )
 
         y = self._draw_line(
@@ -271,6 +262,15 @@ class ReportLabQuotePdfGenerator:
             label="Geral:",
             value=self._format_currency(
                 quote.geral
+            )
+        )
+
+        y = self._draw_line(
+            pdf=pdf,
+            y=y,
+            label="Pedágio:",
+            value=self._format_currency(
+                quote.pedagio
             )
         )
 
