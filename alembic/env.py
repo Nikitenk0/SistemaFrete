@@ -17,7 +17,7 @@ from infrastructure.persistence.sqlalchemy.base import (
 from infrastructure.persistence.sqlalchemy.database import (
     create_database_url
 )
-
+import infrastructure.persistence.sqlalchemy.models
 
 config = context.config
 

@@ -36,10 +36,10 @@ class QualPRouteSearcher:
         calcular_volta: bool = False
     ) -> RouteResult:
 
-        driver, wait = self._session.open()
+
 
         try:
-
+            driver, wait = self._session.open()
             QualPAuthenticator.authenticate(
                 driver,
                 wait,
