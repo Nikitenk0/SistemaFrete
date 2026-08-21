@@ -3,7 +3,7 @@ class ApplicationError(Exception):
 
 
 class InvalidQuoteDataError(ApplicationError):
-    """Os dados fornecidos pelo usuário são inválidos."""
+    """Os dados fornecidos para o orçamento são inválidos."""
 
 
 class RouteNotFoundError(ApplicationError):
@@ -17,5 +17,22 @@ class RouteSearchError(ApplicationError):
 class QuoteCalculationError(ApplicationError):
     """Falha ao processar os dados e calcular o orçamento."""
 
+
 class QuotePdfGenerationError(ApplicationError):
     """Falha ao gerar o documento PDF do orçamento."""
+
+
+class InvalidCustomerDataError(ApplicationError):
+    """Os dados fornecidos para o cliente são inválidos."""
+
+
+class CustomerAlreadyExistsError(ApplicationError):
+    """Já existe cliente com o CPF ou CNPJ informado."""
+
+
+class CustomerNotFoundError(ApplicationError):
+    """Cliente não encontrado."""
+
+
+class CustomerPersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar dados do cliente."""

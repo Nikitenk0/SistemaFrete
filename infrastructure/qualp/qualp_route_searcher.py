@@ -40,6 +40,7 @@ class QualPRouteSearcher:
 
         try:
             driver, wait = self._session.open()
+
             QualPAuthenticator.authenticate(
                 driver,
                 wait,
