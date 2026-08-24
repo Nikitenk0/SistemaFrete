@@ -36,3 +36,14 @@ class CustomerNotFoundError(ApplicationError):
 
 class CustomerPersistenceError(ApplicationError):
     """Falha ao persistir ou consultar dados do cliente."""
+
+class QuoteNotFoundError(ApplicationError):
+    """Orçamento não encontrado."""
+
+
+class QuotePersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar orçamento."""
+
+
+class QuoteNumberGenerationError(ApplicationError):
+    """Falha ao gerar número do orçamento."""

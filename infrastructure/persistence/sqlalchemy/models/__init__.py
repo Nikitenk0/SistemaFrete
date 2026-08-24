@@ -6,8 +6,12 @@ from infrastructure.persistence.sqlalchemy.models.customer import (
     CustomerOperationalLocationModel
 )
 from infrastructure.persistence.sqlalchemy.models.quote import (
+    QuoteAdditionalModel,
+    QuoteEventModel,
+    QuoteInsuranceComponentModel,
     QuoteModel,
-    QuoteTaxModel
+    QuoteNumberCounterModel,
+    QuoteVersionModel
 )
 from infrastructure.persistence.sqlalchemy.models.user import (
     UserModel
@@ -20,7 +24,11 @@ __all__ = (
     "CustomerGroupModel",
     "CustomerModel",
     "CustomerOperationalLocationModel",
+    "QuoteAdditionalModel",
+    "QuoteEventModel",
+    "QuoteInsuranceComponentModel",
     "QuoteModel",
-    "QuoteTaxModel",
+    "QuoteNumberCounterModel",
+    "QuoteVersionModel",
     "UserModel"
 )

@@ -1,6 +1,9 @@
 from types import TracebackType
 from typing import Protocol
 
+from application.ports.quote_number_generator import (
+    QuoteNumberGenerator
+)
 from application.ports.quote_repository import (
     QuoteRepository
 )
@@ -12,6 +15,12 @@ class QuoteUnitOfWork(Protocol):
     def quotes(
         self
     ) -> QuoteRepository:
+        ...
+
+    @property
+    def quote_numbers(
+        self
+    ) -> QuoteNumberGenerator:
         ...
 
     def commit(

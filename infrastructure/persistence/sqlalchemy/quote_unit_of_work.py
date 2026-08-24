@@ -1,15 +1,27 @@
 from types import TracebackType
 
+from sqlalchemy.exc import (
+    SQLAlchemyError
+)
 from sqlalchemy.orm import (
     Session,
     sessionmaker
 )
 
+from application.exceptions import (
+    QuotePersistenceError
+)
+from application.ports.quote_number_generator import (
+    QuoteNumberGenerator
+)
 from application.ports.quote_repository import (
     QuoteRepository
 )
 from application.ports.quote_unit_of_work import (
     QuoteUnitOfWork
+)
+from infrastructure.persistence.sqlalchemy.quote_number_generator import (
+    PostgreSQLQuoteNumberGenerator
 )
 from infrastructure.persistence.sqlalchemy.quote_repository import (
     SqlAlchemyQuoteRepository
@@ -27,10 +39,16 @@ class SqlAlchemyQuoteUnitOfWork(
         self._session_factory = (
             session_factory
         )
+
         self._session: Session | None = None
-        self._quotes: QuoteRepository | None = (
-            None
-        )
+
+        self._quotes: (
+            QuoteRepository | None
+        ) = None
+
+        self._quote_numbers: (
+            QuoteNumberGenerator | None
+        ) = None
 
     @property
     def quotes(
@@ -44,6 +62,18 @@ class SqlAlchemyQuoteUnitOfWork(
 
         return self._quotes
 
+    @property
+    def quote_numbers(
+        self
+    ) -> QuoteNumberGenerator:
+
+        if self._quote_numbers is None:
+            raise RuntimeError(
+                "Unit of Work não iniciado"
+            )
+
+        return self._quote_numbers
+
     def __enter__(
         self
     ) -> "SqlAlchemyQuoteUnitOfWork":
@@ -54,6 +84,12 @@ class SqlAlchemyQuoteUnitOfWork(
 
         self._quotes = (
             SqlAlchemyQuoteRepository(
+                self._session
+            )
+        )
+
+        self._quote_numbers = (
+            PostgreSQLQuoteNumberGenerator(
                 self._session
             )
         )
@@ -79,6 +115,7 @@ class SqlAlchemyQuoteUnitOfWork(
 
             self._session = None
             self._quotes = None
+            self._quote_numbers = None
 
     def commit(
         self
@@ -89,7 +126,18 @@ class SqlAlchemyQuoteUnitOfWork(
                 "Unit of Work não iniciado"
             )
 
-        self._session.commit()
+        try:
+
+            self._session.commit()
+
+        except SQLAlchemyError as error:
+
+            self._session.rollback()
+
+            raise QuotePersistenceError(
+                "Não foi possível confirmar "
+                "a operação com o orçamento"
+            ) from error
 
     def rollback(
         self
