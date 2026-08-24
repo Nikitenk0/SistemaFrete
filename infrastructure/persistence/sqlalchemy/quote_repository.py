@@ -36,6 +36,9 @@ from domain.models.quote_insurance_component import (
     QuoteInsuranceComponent,
     QuoteInsuranceType
 )
+from domain.models.quote_transport_composition import (
+    QuoteTransportComposition
+)
 from domain.models.quote_version import (
     QuoteVersion
 )
@@ -44,6 +47,7 @@ from infrastructure.persistence.sqlalchemy.models import (
     QuoteEventModel,
     QuoteInsuranceComponentModel,
     QuoteModel,
+    QuoteTransportCompositionModel,
     QuoteVersionModel
 )
 
@@ -181,6 +185,11 @@ class SqlAlchemyQuoteRepository(
             selectinload(
                 QuoteModel.versions
             ).selectinload(
+                QuoteVersionModel.transport_compositions
+            ),
+            selectinload(
+                QuoteModel.versions
+            ).selectinload(
                 QuoteVersionModel.additionals
             ),
             selectinload(
@@ -265,11 +274,6 @@ class SqlAlchemyQuoteRepository(
             modality=version.modality,
             origin=version.origin,
             destination=version.destination,
-            distance_km=version.distance_km,
-            axle_count=version.axle_count,
-            include_return_trip=(
-                version.include_return_trip
-            ),
             invoice_value=version.invoice_value,
             tracking_required=(
                 version.tracking_required
@@ -350,6 +354,14 @@ class SqlAlchemyQuoteRepository(
         if version.created_at is not None:
             model.created_at = version.created_at
 
+        model.transport_compositions = [
+            cls._transport_composition_to_model(
+                composition
+            )
+            for composition
+            in version.transport_compositions
+        ]
+
         model.additionals = [
             cls._additional_to_model(
                 additional
@@ -367,6 +379,22 @@ class SqlAlchemyQuoteRepository(
         ]
 
         return model
+
+    @staticmethod
+    def _transport_composition_to_model(
+        composition: QuoteTransportComposition
+    ) -> QuoteTransportCompositionModel:
+
+        return QuoteTransportCompositionModel(
+            position=composition.position,
+            axle_count=composition.axle_count,
+            include_return_trip=(
+                composition.include_return_trip
+            ),
+            distance_km=composition.distance_km,
+            driver_amount=composition.driver_amount,
+            toll_amount=composition.toll_amount
+        )
 
     @staticmethod
     def _additional_to_model(
@@ -488,6 +516,28 @@ class SqlAlchemyQuoteRepository(
         model: QuoteVersionModel
     ) -> QuoteVersion:
 
+        transport_compositions = tuple(
+            QuoteTransportComposition(
+                quote_transport_composition_id=(
+                    composition
+                    .quote_transport_composition_id
+                ),
+                quote_version_id=(
+                    composition.quote_version_id
+                ),
+                position=composition.position,
+                axle_count=composition.axle_count,
+                include_return_trip=(
+                    composition.include_return_trip
+                ),
+                distance_km=composition.distance_km,
+                driver_amount=composition.driver_amount,
+                toll_amount=composition.toll_amount
+            )
+            for composition
+            in model.transport_compositions
+        )
+
         additionals = tuple(
             QuoteAdditional(
                 quote_additional_id=(
@@ -564,11 +614,6 @@ class SqlAlchemyQuoteRepository(
             modality=model.modality,
             origin=model.origin,
             destination=model.destination,
-            distance_km=model.distance_km,
-            axle_count=model.axle_count,
-            include_return_trip=(
-                model.include_return_trip
-            ),
             invoice_value=model.invoice_value,
             tracking_required=(
                 model.tracking_required
@@ -642,6 +687,9 @@ class SqlAlchemyQuoteRepository(
             ),
             proposal_observation=(
                 model.proposal_observation
+            ),
+            transport_compositions=(
+                transport_compositions
             ),
             additionals=additionals,
             insurance_components=(

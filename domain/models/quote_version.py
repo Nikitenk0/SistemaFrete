@@ -14,6 +14,9 @@ from domain.models.quote_additional import (
 from domain.models.quote_insurance_component import (
     QuoteInsuranceComponent
 )
+from domain.models.quote_transport_composition import (
+    QuoteTransportComposition
+)
 
 
 @dataclass(frozen=True)
@@ -31,11 +34,6 @@ class QuoteVersion:
 
     origin: str | None = None
     destination: str | None = None
-
-    distance_km: Decimal | None = None
-
-    axle_count: int | None = None
-    include_return_trip: bool = False
 
     invoice_value: Decimal | None = None
 
@@ -83,6 +81,11 @@ class QuoteVersion:
 
     internal_observation: str | None = None
     proposal_observation: str | None = None
+
+    transport_compositions: tuple[
+        QuoteTransportComposition,
+        ...
+    ] = ()
 
     additionals: tuple[
         QuoteAdditional,
@@ -143,22 +146,6 @@ class QuoteVersion:
                 "possuir identificação"
             )
 
-        if (
-            self.axle_count is not None
-            and self.axle_count < 1
-        ):
-            raise ValueError(
-                "Quantidade de eixos inválida"
-            )
-
-        if (
-            self.distance_km is not None
-            and self.distance_km < 0
-        ):
-            raise ValueError(
-                "Distância não pode ser negativa"
-            )
-
         non_negative_values = (
             self.invoice_value,
             self.driver_amount,
@@ -201,34 +188,32 @@ class QuoteVersion:
                 "Validade do orçamento inválida"
             )
 
-        additional_positions = [
-            additional.position
-            for additional in self.additionals
-        ]
+        self._validate_unique_positions(
+            (
+                composition.position
+                for composition
+                in self.transport_compositions
+            ),
+            "composições de transporte"
+        )
 
-        if (
-            len(additional_positions)
-            != len(set(additional_positions))
-        ):
-            raise ValueError(
-                "Existem adicionais "
-                "com posição duplicada"
-            )
+        self._validate_unique_positions(
+            (
+                additional.position
+                for additional
+                in self.additionals
+            ),
+            "adicionais"
+        )
 
-        insurance_positions = [
-            component.position
-            for component
-            in self.insurance_components
-        ]
-
-        if (
-            len(insurance_positions)
-            != len(set(insurance_positions))
-        ):
-            raise ValueError(
-                "Existem seguros "
-                "com posição duplicada"
-            )
+        self._validate_unique_positions(
+            (
+                component.position
+                for component
+                in self.insurance_components
+            ),
+            "seguros"
+        )
 
         object.__setattr__(
             self,
@@ -247,6 +232,25 @@ class QuoteVersion:
             "customer_trade_name_snapshot",
             trade_name
         )
+
+    @staticmethod
+    def _validate_unique_positions(
+        positions,
+        item_name: str
+    ) -> None:
+
+        position_list = list(
+            positions
+        )
+
+        if (
+            len(position_list)
+            != len(set(position_list))
+        ):
+            raise ValueError(
+                f"Existem {item_name} "
+                "com posição duplicada"
+            )
 
     @staticmethod
     def _clean_optional_text(

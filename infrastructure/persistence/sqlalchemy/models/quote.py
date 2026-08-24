@@ -281,28 +281,6 @@ class QuoteVersionModel(Base):
         nullable=True
     )
 
-    distance_km: Mapped[
-        Decimal | None
-    ] = mapped_column(
-        Numeric(),
-        nullable=True
-    )
-
-    axle_count: Mapped[
-        int | None
-    ] = mapped_column(
-        SmallInteger,
-        nullable=True
-    )
-
-    include_return_trip: Mapped[
-        bool
-    ] = mapped_column(
-        Boolean,
-        nullable=False,
-        default=False
-    )
-
     invoice_value: Mapped[
         Decimal | None
     ] = mapped_column(
@@ -539,6 +517,16 @@ class QuoteVersionModel(Base):
         foreign_keys=[quote_id]
     )
 
+    transport_compositions: Mapped[
+        list[QuoteTransportCompositionModel]
+    ] = relationship(
+        back_populates="quote_version",
+        cascade="all, delete-orphan",
+        order_by=(
+            "QuoteTransportCompositionModel.position"
+        )
+    )
+
     additionals: Mapped[
         list[QuoteAdditionalModel]
     ] = relationship(
@@ -555,6 +543,128 @@ class QuoteVersionModel(Base):
         order_by=(
             "QuoteInsuranceComponentModel.position"
         )
+    )
+
+
+class QuoteTransportCompositionModel(Base):
+
+    __tablename__ = (
+        "quote_transport_compositions"
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "quote_version_id",
+            "position",
+            name=(
+                "uq_quote_transport_compositions_"
+                "quote_version_id_position"
+            )
+        ),
+        CheckConstraint(
+            "position >= 1",
+            name=(
+                "ck_quote_transport_compositions_"
+                "position_positive"
+            )
+        ),
+        CheckConstraint(
+            "axle_count >= 1",
+            name=(
+                "ck_quote_transport_compositions_"
+                "axle_count_positive"
+            )
+        ),
+        CheckConstraint(
+            (
+                "distance_km IS NULL "
+                "OR distance_km >= 0"
+            ),
+            name=(
+                "ck_quote_transport_compositions_"
+                "distance_non_negative"
+            )
+        ),
+        CheckConstraint(
+            (
+                "driver_amount IS NULL "
+                "OR driver_amount >= 0"
+            ),
+            name=(
+                "ck_quote_transport_compositions_"
+                "driver_amount_non_negative"
+            )
+        ),
+        CheckConstraint(
+            (
+                "toll_amount IS NULL "
+                "OR toll_amount >= 0"
+            ),
+            name=(
+                "ck_quote_transport_compositions_"
+                "toll_amount_non_negative"
+            )
+        ),
+    )
+
+    quote_transport_composition_id: Mapped[
+        int
+    ] = mapped_column(
+        BigInteger,
+        Identity(),
+        primary_key=True
+    )
+
+    quote_version_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "quote_versions.quote_version_id",
+            ondelete="CASCADE"
+        ),
+        nullable=False,
+        index=True
+    )
+
+    position: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False
+    )
+
+    axle_count: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False
+    )
+
+    include_return_trip: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False
+    )
+
+    distance_km: Mapped[
+        Decimal | None
+    ] = mapped_column(
+        Numeric(),
+        nullable=True
+    )
+
+    driver_amount: Mapped[
+        Decimal | None
+    ] = mapped_column(
+        Numeric(),
+        nullable=True
+    )
+
+    toll_amount: Mapped[
+        Decimal | None
+    ] = mapped_column(
+        Numeric(),
+        nullable=True
+    )
+
+    quote_version: Mapped[
+        QuoteVersionModel
+    ] = relationship(
+        back_populates="transport_compositions"
     )
 
 

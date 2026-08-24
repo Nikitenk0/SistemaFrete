@@ -47,3 +47,10 @@ class QuotePersistenceError(ApplicationError):
 
 class QuoteNumberGenerationError(ApplicationError):
     """Falha ao gerar número do orçamento."""
+
+class QuotePricingPolicyError(ApplicationError):
+    """Falha ao obter a política de precificação."""
+
+
+class QuoteVersionCalculationError(ApplicationError):
+    """Falha ao calcular uma versão do orçamento."""

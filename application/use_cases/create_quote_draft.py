@@ -24,6 +24,9 @@ from domain.models.quote_event import (
     QuoteEvent,
     QuoteEventType
 )
+from domain.models.quote_transport_composition import (
+    QuoteTransportComposition
+)
 from domain.models.quote_version import (
     QuoteVersion
 )
@@ -56,11 +59,12 @@ class CreateQuoteDraft:
         modality: str | None = None,
         origin: str | None = None,
         destination: str | None = None,
-        distance_km: Decimal | None = None,
-        axle_count: int | None = None,
-        include_return_trip: bool = False,
         invoice_value: Decimal | None = None,
         tracking_required: bool = False,
+        transport_compositions: tuple[
+            QuoteTransportComposition,
+            ...
+        ] = (),
         internal_observation: str | None = None,
         proposal_observation: str | None = None,
         created_by: int | None = None
@@ -136,14 +140,12 @@ class CreateQuoteDraft:
                     modality=modality,
                     origin=origin,
                     destination=destination,
-                    distance_km=distance_km,
-                    axle_count=axle_count,
-                    include_return_trip=(
-                        include_return_trip
-                    ),
                     invoice_value=invoice_value,
                     tracking_required=(
                         tracking_required
+                    ),
+                    transport_compositions=(
+                        transport_compositions
                     ),
                     internal_observation=(
                         internal_observation

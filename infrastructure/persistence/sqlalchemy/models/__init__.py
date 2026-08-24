@@ -11,13 +11,19 @@ from infrastructure.persistence.sqlalchemy.models.quote import (
     QuoteInsuranceComponentModel,
     QuoteModel,
     QuoteNumberCounterModel,
+    QuoteTransportCompositionModel,
     QuoteVersionModel
 )
 from infrastructure.persistence.sqlalchemy.models.user import (
     UserModel
 )
 
-
+from infrastructure.persistence.sqlalchemy.models.pricing_policy import (
+    AdministrativeCostPolicyModel,
+    MarginBandModel,
+    MarginTableModel,
+    TaxPolicyModel
+)
 __all__ = (
     "CustomerAddressModel",
     "CustomerContactModel",
@@ -29,6 +35,11 @@ __all__ = (
     "QuoteInsuranceComponentModel",
     "QuoteModel",
     "QuoteNumberCounterModel",
+    "QuoteTransportCompositionModel",
     "QuoteVersionModel",
-    "UserModel"
+    "UserModel",
+    "AdministrativeCostPolicyModel",
+    "MarginBandModel",
+    "MarginTableModel",
+    "TaxPolicyModel"
 )
