@@ -31,6 +31,12 @@ class QuoteRepository(Protocol):
     ) -> Quote | None:
         ...
 
+    def list_by_primary_quote_id_for_update(
+        self,
+        primary_quote_id: int
+    ) -> tuple[Quote, ...]:
+        ...
+
     def get_by_number(
         self,
         quote_number: str

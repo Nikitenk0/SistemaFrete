@@ -755,6 +755,44 @@ class SqlAlchemyQuoteRepository(
             model
         )
 
+    def list_by_primary_quote_id_for_update(
+        self,
+        primary_quote_id: int
+    ) -> tuple[Quote, ...]:
+
+        try:
+
+            models = self._session.scalars(
+                select(
+                    QuoteModel
+                )
+                .options(
+                    *self._load_options()
+                )
+                .where(
+                    QuoteModel.primary_quote_id
+                    == primary_quote_id
+                )
+                .order_by(
+                    QuoteModel.quote_id
+                )
+                .with_for_update()
+            ).all()
+
+        except SQLAlchemyError as error:
+
+            raise QuotePersistenceError(
+                "Não foi possível bloquear orçamentos "
+                "complementares para atualização"
+            ) from error
+
+        return tuple(
+            self._to_domain(
+                model
+            )
+            for model in models
+        )
+
     def get_by_number(
         self,
         quote_number: str

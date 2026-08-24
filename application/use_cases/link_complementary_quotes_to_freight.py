@@ -1,11 +1,4 @@
-from dataclasses import replace
-from datetime import (
-    datetime,
-    timezone
-)
-
 from application.exceptions import (
-    FreightAlreadyExistsError,
     InvalidFreightDataError,
     QuoteNotFoundError
 )
@@ -15,9 +8,6 @@ from application.ports.freight_unit_of_work import (
 from domain.freight_quote_linking import (
     link_complementary_quotes_to_freight
 )
-from domain.models.freight import (
-    Freight
-)
 from domain.models.quote import (
     Quote,
     QuoteStatus,
@@ -25,7 +15,7 @@ from domain.models.quote import (
 )
 
 
-class CreateFreightFromApprovedQuote:
+class LinkComplementaryQuotesToFreight:
 
     def __init__(
         self,
@@ -38,9 +28,8 @@ class CreateFreightFromApprovedQuote:
 
     def execute(
         self,
-        primary_quote_id: int,
-        created_by: int | None = None
-    ) -> Freight:
+        primary_quote_id: int
+    ) -> tuple[Quote, ...]:
 
         if primary_quote_id < 1:
             raise InvalidFreightDataError(
@@ -52,68 +41,56 @@ class CreateFreightFromApprovedQuote:
             as unit_of_work
         ):
 
-            quote = (
+            primary_quote = (
                 unit_of_work.quotes
                 .get_by_id_for_update(
                     primary_quote_id
                 )
             )
 
-            if quote is None:
+            if primary_quote is None:
                 raise QuoteNotFoundError(
                     "Orçamento principal não encontrado"
                 )
 
-            self._validate_quote(
-                quote
+            self._validate_primary_quote(
+                primary_quote
             )
 
-            try:
-                freight = Freight(
-                    customer_id=quote.customer_id,
-                    primary_quote_id=quote.quote_id,
-                    created_at=datetime.now(
-                        timezone.utc
-                    ),
-                    created_by=created_by
+            freight = (
+                unit_of_work.freights.get_by_id(
+                    primary_quote.freight_id
                 )
-            except ValueError as error:
+            )
+
+            if freight is None:
                 raise InvalidFreightDataError(
-                    str(error)
-                ) from error
-
-            created_freight = (
-                unit_of_work.freights.add(
-                    freight
+                    "Frete associado ao orçamento não foi encontrado"
                 )
-            )
 
-            updated_quote = replace(
-                quote,
-                freight_id=(
-                    created_freight.freight_id
+            if (
+                freight.primary_quote_id
+                != primary_quote.quote_id
+                or freight.customer_id
+                != primary_quote.customer_id
+            ):
+                raise InvalidFreightDataError(
+                    "Vínculo entre frete e orçamento principal é inconsistente"
                 )
-            )
-
-            saved_primary_quote = (
-                unit_of_work.quotes.save(
-                    updated_quote
-                )
-            )
 
             complementary_quotes = (
                 unit_of_work.quotes
                 .list_by_primary_quote_id_for_update(
-                    primary_quote_id
+                    primary_quote.quote_id
                 )
             )
 
             try:
                 linked_quotes = (
                     link_complementary_quotes_to_freight(
-                        saved_primary_quote,
+                        primary_quote,
                         complementary_quotes,
-                        created_freight.freight_id
+                        freight.freight_id
                     )
                 )
             except ValueError as error:
@@ -134,27 +111,24 @@ class CreateFreightFromApprovedQuote:
 
             unit_of_work.commit()
 
-            return created_freight
+            return linked_quotes
 
     @staticmethod
-    def _validate_quote(
+    def _validate_primary_quote(
         quote: Quote
     ) -> None:
 
         if quote.quote_type != QuoteType.PRIMARY:
             raise InvalidFreightDataError(
-                "Frete só pode ser criado a partir "
-                "de orçamento principal"
+                "Orçamento informado não é principal"
             )
 
         if quote.current_status != QuoteStatus.APPROVED:
             raise InvalidFreightDataError(
-                "Frete só pode ser criado a partir "
-                "de orçamento principal aprovado"
+                "Orçamento principal precisa estar aprovado"
             )
 
-        if quote.freight_id is not None:
-            raise FreightAlreadyExistsError(
-                "O orçamento principal já possui "
-                "um frete associado"
+        if quote.freight_id is None:
+            raise InvalidFreightDataError(
+                "Orçamento principal ainda não possui frete"
             )

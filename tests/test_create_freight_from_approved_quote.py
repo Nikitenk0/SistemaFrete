@@ -50,10 +50,13 @@ class FakeQuoteRepository:
 
     def __init__(
         self,
-        quote: Quote | None
+        quote: Quote | None,
+        complementaries: tuple[Quote, ...] = ()
     ):
         self.quote = quote
+        self.complementaries = complementaries
         self.saved: Quote | None = None
+        self.saved_quotes: list[Quote] = []
 
     def get_by_id_for_update(
         self,
@@ -67,12 +70,33 @@ class FakeQuoteRepository:
 
         return None
 
+    def list_by_primary_quote_id_for_update(
+        self,
+        primary_quote_id: int
+    ) -> tuple[Quote, ...]:
+        return tuple(
+            quote
+            for quote in self.complementaries
+            if quote.primary_quote_id == primary_quote_id
+        )
+
     def save(
         self,
         quote: Quote
     ) -> Quote:
         self.saved = quote
-        self.quote = quote
+        self.saved_quotes.append(quote)
+
+        if quote.quote_type == QuoteType.PRIMARY:
+            self.quote = quote
+        else:
+            self.complementaries = tuple(
+                quote
+                if item.quote_id == quote.quote_id
+                else item
+                for item in self.complementaries
+            )
+
         return quote
 
 
@@ -80,11 +104,13 @@ class FakeFreightUnitOfWork:
 
     def __init__(
         self,
-        quote: Quote | None
+        quote: Quote | None,
+        complementaries: tuple[Quote, ...] = ()
     ):
         self.freights = FakeFreightRepository()
         self.quotes = FakeQuoteRepository(
-            quote
+            quote,
+            complementaries
         )
         self.committed = False
 
@@ -105,9 +131,11 @@ class FakeFreightUnitOfWorkFactory:
 
     def __init__(
         self,
-        quote: Quote | None
+        quote: Quote | None,
+        complementaries: tuple[Quote, ...] = ()
     ):
         self.quote = quote
+        self.complementaries = complementaries
         self.created: list[
             FakeFreightUnitOfWork
         ] = []
@@ -116,7 +144,8 @@ class FakeFreightUnitOfWorkFactory:
         self
     ) -> FakeFreightUnitOfWork:
         unit_of_work = FakeFreightUnitOfWork(
-            self.quote
+            self.quote,
+            self.complementaries
         )
         self.created.append(
             unit_of_work
@@ -179,6 +208,36 @@ def make_quote(
     )
 
 
+def make_complementary_quote(
+    freight_id: int | None = None
+) -> Quote:
+    return Quote(
+        quote_id=2,
+        quote_number="ORC-2026-00002",
+        customer_id=5,
+        quote_type=QuoteType.COMPLEMENTARY,
+        primary_quote_id=1,
+        current_status=QuoteStatus.DRAFT,
+        freight_id=freight_id,
+        versions=(
+            QuoteVersion(
+                quote_version_id=20,
+                quote_id=2,
+                version_number=1,
+                customer_person_type_snapshot=(
+                    CustomerPersonType.COMPANY
+                ),
+                customer_document_snapshot=(
+                    "12345678000195"
+                ),
+                customer_legal_name_snapshot=(
+                    "Cliente Teste Ltda."
+                )
+            ),
+        )
+    )
+
+
 class TestCreateFreightFromApprovedQuote(
     unittest.TestCase
 ):
@@ -218,6 +277,38 @@ class TestCreateFreightFromApprovedQuote(
         self.assertEqual(
             unit_of_work.quotes.saved.freight_id,
             77
+        )
+        self.assertTrue(
+            unit_of_work.committed
+        )
+
+    def test_links_existing_complementary_quotes(
+        self
+    ):
+        factory = FakeFreightUnitOfWorkFactory(
+            make_quote(),
+            (
+                make_complementary_quote(),
+            )
+        )
+
+        CreateFreightFromApprovedQuote(
+            factory
+        ).execute(
+            primary_quote_id=1
+        )
+
+        unit_of_work = factory.created[-1]
+
+        linked = unit_of_work.quotes.complementaries[0]
+
+        self.assertEqual(
+            linked.freight_id,
+            77
+        )
+        self.assertEqual(
+            len(unit_of_work.quotes.saved_quotes),
+            2
         )
         self.assertTrue(
             unit_of_work.committed
