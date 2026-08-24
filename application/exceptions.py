@@ -61,3 +61,15 @@ class InvalidQuoteStateError(ApplicationError):
 
 class QuoteConcurrentModificationError(ApplicationError):
     """O orçamento foi alterado durante a operação."""
+
+
+class InvalidFreightDataError(ApplicationError):
+    """Os dados fornecidos para o frete são inválidos."""
+
+
+class FreightAlreadyExistsError(ApplicationError):
+    """O orçamento principal já possui um frete associado."""
+
+
+class FreightPersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar frete."""
