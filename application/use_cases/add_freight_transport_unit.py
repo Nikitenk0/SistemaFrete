@@ -11,16 +11,15 @@ from application.exceptions import (
 from application.ports.freight_unit_of_work import (
     FreightUnitOfWorkFactory
 )
-from domain.freight_lifecycle import (
-    transition_freight
-)
 from domain.models.freight import (
-    Freight,
     FreightStatus
 )
+from domain.models.freight_transport_unit import (
+    FreightTransportUnit
+)
 
 
-class ChangeFreightStatus:
+class AddFreightTransportUnit:
 
     def __init__(
         self,
@@ -34,10 +33,8 @@ class ChangeFreightStatus:
     def execute(
         self,
         freight_id: int,
-        target_status: FreightStatus,
-        user_id: int | None = None,
-        observation: str | None = None
-    ) -> Freight:
+        created_by: int | None = None
+    ) -> FreightTransportUnit:
 
         if freight_id < 1:
             raise InvalidFreightDataError(
@@ -45,11 +42,11 @@ class ChangeFreightStatus:
             )
 
         if (
-            user_id is not None
-            and user_id < 1
+            created_by is not None
+            and created_by < 1
         ):
             raise InvalidFreightDataError(
-                "user_id inválido"
+                "created_by inválido"
             )
 
         with (
@@ -69,40 +66,53 @@ class ChangeFreightStatus:
                     "Frete não encontrado"
                 )
 
-            if (
-                target_status
-                == FreightStatus.IN_PROGRESS
-                and unit_of_work.transport_units
-                .count_by_freight_id(
-                    freight_id
-                ) < 1
-            ):
+            if freight.current_status not in {
+                FreightStatus.PENDING,
+                FreightStatus.IN_PROGRESS
+            }:
                 raise InvalidFreightStateError(
-                    "Frete precisa possuir pelo menos "
-                    "uma unidade de transporte para iniciar"
+                    "Frete concluído ou cancelado não "
+                    "aceita novas unidades de transporte"
                 )
 
+            existing_units = (
+                unit_of_work.transport_units
+                .list_by_freight_id(
+                    freight_id
+                )
+            )
+
+            next_position = (
+                max(
+                    (
+                        unit.position
+                        for unit in existing_units
+                    ),
+                    default=0
+                )
+                + 1
+            )
+
             try:
-                updated_freight = transition_freight(
-                    freight=freight,
-                    target_status=target_status,
-                    occurred_at=datetime.now(
+                transport_unit = FreightTransportUnit(
+                    freight_id=freight_id,
+                    position=next_position,
+                    created_at=datetime.now(
                         timezone.utc
                     ),
-                    user_id=user_id,
-                    observation=observation
+                    created_by=created_by
                 )
             except ValueError as error:
-                raise InvalidFreightStateError(
+                raise InvalidFreightDataError(
                     str(error)
                 ) from error
 
-            saved_freight = (
-                unit_of_work.freights.save(
-                    updated_freight
+            created_unit = (
+                unit_of_work.transport_units.add(
+                    transport_unit
                 )
             )
 
             unit_of_work.commit()
 
-            return saved_freight
+            return created_unit

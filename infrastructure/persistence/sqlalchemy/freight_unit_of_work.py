@@ -14,6 +14,9 @@ from application.exceptions import (
 from application.ports.freight_repository import (
     FreightRepository
 )
+from application.ports.freight_transport_unit_repository import (
+    FreightTransportUnitRepository
+)
 from application.ports.freight_unit_of_work import (
     FreightUnitOfWork
 )
@@ -22,6 +25,9 @@ from application.ports.quote_repository import (
 )
 from infrastructure.persistence.sqlalchemy.freight_repository import (
     SqlAlchemyFreightRepository
+)
+from infrastructure.persistence.sqlalchemy.freight_transport_unit_repository import (
+    SqlAlchemyFreightTransportUnitRepository
 )
 from infrastructure.persistence.sqlalchemy.quote_repository import (
     SqlAlchemyQuoteRepository
@@ -42,6 +48,9 @@ class SqlAlchemyFreightUnitOfWork(
 
         self._session: Session | None = None
         self._freights: FreightRepository | None = None
+        self._transport_units: (
+            FreightTransportUnitRepository | None
+        ) = None
         self._quotes: QuoteRepository | None = None
 
     @property
@@ -55,6 +64,18 @@ class SqlAlchemyFreightUnitOfWork(
             )
 
         return self._freights
+
+    @property
+    def transport_units(
+        self
+    ) -> FreightTransportUnitRepository:
+
+        if self._transport_units is None:
+            raise RuntimeError(
+                "Unit of Work não iniciado"
+            )
+
+        return self._transport_units
 
     @property
     def quotes(
@@ -78,6 +99,12 @@ class SqlAlchemyFreightUnitOfWork(
 
         self._freights = (
             SqlAlchemyFreightRepository(
+                self._session
+            )
+        )
+
+        self._transport_units = (
+            SqlAlchemyFreightTransportUnitRepository(
                 self._session
             )
         )
@@ -107,6 +134,7 @@ class SqlAlchemyFreightUnitOfWork(
 
             self._session = None
             self._freights = None
+            self._transport_units = None
             self._quotes = None
 
     def commit(

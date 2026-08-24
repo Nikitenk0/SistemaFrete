@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Identity,
+    SmallInteger,
     String,
     Text,
     UniqueConstraint,
@@ -124,6 +125,79 @@ class FreightModel(Base):
         back_populates="freight",
         cascade="all, delete-orphan",
         order_by="FreightEventModel.freight_event_id"
+    )
+
+    transport_units: Mapped[
+        list[FreightTransportUnitModel]
+    ] = relationship(
+        back_populates="freight",
+        cascade="all, delete-orphan",
+        order_by="FreightTransportUnitModel.position"
+    )
+
+
+class FreightTransportUnitModel(Base):
+
+    __tablename__ = "freight_transport_units"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "freight_id",
+            "position",
+            name=(
+                "uq_freight_transport_units_"
+                "freight_id_position"
+            )
+        ),
+        CheckConstraint(
+            "position >= 1",
+            name=(
+                "ck_freight_transport_units_"
+                "position_positive"
+            )
+        ),
+    )
+
+    freight_transport_unit_id: Mapped[int] = mapped_column(
+        BigInteger,
+        Identity(),
+        primary_key=True
+    )
+
+    freight_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "freights.freight_id",
+            ondelete="CASCADE"
+        ),
+        nullable=False,
+        index=True
+    )
+
+    position: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(
+            timezone=True
+        ),
+        server_default=func.now(),
+        nullable=False
+    )
+
+    created_by: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "users.user_id",
+            ondelete="SET NULL"
+        ),
+        nullable=True
+    )
+
+    freight: Mapped[
+        FreightModel
+    ] = relationship(
+        back_populates="transport_units"
     )
 
 

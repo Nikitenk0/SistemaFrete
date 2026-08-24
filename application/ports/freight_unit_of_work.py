@@ -4,6 +4,9 @@ from typing import Protocol
 from application.ports.freight_repository import (
     FreightRepository
 )
+from application.ports.freight_transport_unit_repository import (
+    FreightTransportUnitRepository
+)
 from application.ports.quote_repository import (
     QuoteRepository
 )
@@ -15,6 +18,12 @@ class FreightUnitOfWork(Protocol):
     def freights(
         self
     ) -> FreightRepository:
+        ...
+
+    @property
+    def transport_units(
+        self
+    ) -> FreightTransportUnitRepository:
         ...
 
     @property

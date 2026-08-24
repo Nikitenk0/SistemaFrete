@@ -58,13 +58,34 @@ class FakeFreightRepository:
         return freight
 
 
+class FakeFreightTransportUnitRepository:
+
+    def __init__(
+        self,
+        count: int
+    ):
+        self.count = count
+
+    def count_by_freight_id(
+        self,
+        freight_id: int
+    ) -> int:
+        return self.count
+
+
 class FakeFreightUnitOfWork:
 
     def __init__(
         self,
-        repository: FakeFreightRepository
+        repository: FakeFreightRepository,
+        transport_unit_count: int
     ):
         self.freights = repository
+        self.transport_units = (
+            FakeFreightTransportUnitRepository(
+                transport_unit_count
+            )
+        )
         self.committed = False
 
     def __enter__(self):
@@ -84,12 +105,16 @@ class FakeFreightUnitOfWorkFactory:
 
     def __init__(
         self,
-        freight: Freight | None
+        freight: Freight | None,
+        transport_unit_count: int = 1
     ):
         self.repository = (
             FakeFreightRepository(
                 freight
             )
+        )
+        self.transport_unit_count = (
+            transport_unit_count
         )
         self.created: list[
             FakeFreightUnitOfWork
@@ -99,7 +124,8 @@ class FakeFreightUnitOfWorkFactory:
         self
     ) -> FakeFreightUnitOfWork:
         unit_of_work = FakeFreightUnitOfWork(
-            self.repository
+            self.repository,
+            self.transport_unit_count
         )
         self.created.append(
             unit_of_work
@@ -152,7 +178,8 @@ class FreightStatusUseCaseTests(
         self
     ) -> None:
         factory = FakeFreightUnitOfWorkFactory(
-            make_freight()
+            make_freight(),
+            transport_unit_count=1
         )
 
         result = StartFreight(
@@ -179,6 +206,27 @@ class FreightStatusUseCaseTests(
             9
         )
         self.assertTrue(
+            factory.created[-1].committed
+        )
+
+    def test_rejects_start_without_transport_unit(
+        self
+    ) -> None:
+        factory = FakeFreightUnitOfWorkFactory(
+            make_freight(),
+            transport_unit_count=0
+        )
+
+        with self.assertRaises(
+            InvalidFreightStateError
+        ):
+            StartFreight(
+                factory
+            ).execute(
+                freight_id=77
+            )
+
+        self.assertFalse(
             factory.created[-1].committed
         )
 
