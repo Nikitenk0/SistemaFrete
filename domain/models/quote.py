@@ -156,3 +156,26 @@ class Quote:
                 "Versão aprovada só pode existir "
                 "em orçamento aprovado"
             )
+
+        if self.approved_version_id is not None:
+            approved_versions = [
+                version
+                for version in self.versions
+                if version.quote_version_id
+                == self.approved_version_id
+            ]
+
+            if len(approved_versions) != 1:
+                raise ValueError(
+                    "Versão aprovada precisa pertencer "
+                    "ao orçamento"
+                )
+
+            if (
+                approved_versions[0].contracted_price
+                is None
+            ):
+                raise ValueError(
+                    "Versão aprovada precisa possuir "
+                    "preço contratado"
+                )

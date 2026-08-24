@@ -54,3 +54,10 @@ class QuotePricingPolicyError(ApplicationError):
 
 class QuoteVersionCalculationError(ApplicationError):
     """Falha ao calcular uma versão do orçamento."""
+
+class InvalidQuoteStateError(ApplicationError):
+    """O orçamento não permite a operação no estado atual."""
+
+
+class QuoteConcurrentModificationError(ApplicationError):
+    """O orçamento foi alterado durante a operação."""
