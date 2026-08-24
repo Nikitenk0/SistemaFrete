@@ -127,7 +127,12 @@ class QuoteModel(Base):
     freight_id: Mapped[
         int | None
     ] = mapped_column(
-        BigInteger,
+        ForeignKey(
+            "freights.freight_id",
+            name="fk_quotes_freight_id_freights",
+            use_alter=True,
+            ondelete="SET NULL"
+        ),
         nullable=True,
         index=True
     )
