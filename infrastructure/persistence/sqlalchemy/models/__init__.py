@@ -6,6 +6,7 @@ from infrastructure.persistence.sqlalchemy.models.customer import (
     CustomerOperationalLocationModel
 )
 from infrastructure.persistence.sqlalchemy.models.freight import (
+    FreightEventModel,
     FreightModel
 )
 from infrastructure.persistence.sqlalchemy.models.quote import (
@@ -27,12 +28,14 @@ from infrastructure.persistence.sqlalchemy.models.pricing_policy import (
     MarginTableModel,
     TaxPolicyModel
 )
+
 __all__ = (
     "CustomerAddressModel",
     "CustomerContactModel",
     "CustomerGroupModel",
     "CustomerModel",
     "CustomerOperationalLocationModel",
+    "FreightEventModel",
     "FreightModel",
     "QuoteAdditionalModel",
     "QuoteEventModel",

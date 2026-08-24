@@ -73,3 +73,11 @@ class FreightAlreadyExistsError(ApplicationError):
 
 class FreightPersistenceError(ApplicationError):
     """Falha ao persistir ou consultar frete."""
+
+
+class FreightNotFoundError(ApplicationError):
+    """Frete não encontrado."""
+
+
+class InvalidFreightStateError(ApplicationError):
+    """O frete não permite a operação no estado atual."""

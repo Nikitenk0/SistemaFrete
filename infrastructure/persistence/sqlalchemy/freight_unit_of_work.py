@@ -126,7 +126,7 @@ class SqlAlchemyFreightUnitOfWork(
 
             raise FreightPersistenceError(
                 "Não foi possível confirmar "
-                "a criação do frete"
+                "a operação do frete"
             ) from error
 
     def rollback(

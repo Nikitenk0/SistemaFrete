@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import replace
 from decimal import Decimal
 
 from application.exceptions import (
@@ -13,7 +14,11 @@ from domain.models.customer import (
     CustomerPersonType
 )
 from domain.models.freight import (
-    Freight
+    Freight,
+    FreightStatus
+)
+from domain.models.freight_event import (
+    FreightEventType
 )
 from domain.models.quote import (
     Quote,
@@ -35,14 +40,9 @@ class FakeFreightRepository:
         freight: Freight
     ) -> Freight:
         self.added = freight
-        return Freight(
-            freight_id=77,
-            customer_id=freight.customer_id,
-            primary_quote_id=(
-                freight.primary_quote_id
-            ),
-            created_at=freight.created_at,
-            created_by=freight.created_by
+        return replace(
+            freight,
+            freight_id=77
         )
 
 
@@ -273,6 +273,26 @@ class TestCreateFreightFromApprovedQuote(
         self.assertEqual(
             result.created_by,
             9
+        )
+        self.assertEqual(
+            result.current_status,
+            FreightStatus.PENDING
+        )
+        self.assertEqual(
+            len(result.events),
+            1
+        )
+        self.assertEqual(
+            result.events[0].event_type,
+            FreightEventType.CREATED
+        )
+        self.assertEqual(
+            result.events[0].new_status,
+            FreightStatus.PENDING
+        )
+        self.assertEqual(
+            result.events[0].occurred_at,
+            result.created_at
         )
         self.assertEqual(
             unit_of_work.quotes.saved.freight_id,

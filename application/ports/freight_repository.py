@@ -13,7 +13,19 @@ class FreightRepository(Protocol):
     ) -> Freight:
         ...
 
+    def save(
+        self,
+        freight: Freight
+    ) -> Freight:
+        ...
+
     def get_by_id(
+        self,
+        freight_id: int
+    ) -> Freight | None:
+        ...
+
+    def get_by_id_for_update(
         self,
         freight_id: int
     ) -> Freight | None:

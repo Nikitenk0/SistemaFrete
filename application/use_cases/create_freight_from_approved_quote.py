@@ -16,7 +16,12 @@ from domain.freight_quote_linking import (
     link_complementary_quotes_to_freight
 )
 from domain.models.freight import (
-    Freight
+    Freight,
+    FreightStatus
+)
+from domain.models.freight_event import (
+    FreightEvent,
+    FreightEventType
 )
 from domain.models.quote import (
     Quote,
@@ -68,13 +73,33 @@ class CreateFreightFromApprovedQuote:
                 quote
             )
 
+            now = datetime.now(
+                timezone.utc
+            )
+
             try:
+                created_event = FreightEvent(
+                    event_type=(
+                        FreightEventType.CREATED
+                    ),
+                    previous_status=None,
+                    new_status=(
+                        FreightStatus.PENDING
+                    ),
+                    occurred_at=now,
+                    user_id=created_by
+                )
+
                 freight = Freight(
                     customer_id=quote.customer_id,
                     primary_quote_id=quote.quote_id,
-                    created_at=datetime.now(
-                        timezone.utc
+                    current_status=(
+                        FreightStatus.PENDING
                     ),
+                    events=(
+                        created_event,
+                    ),
+                    created_at=now,
                     created_by=created_by
                 )
             except ValueError as error:
