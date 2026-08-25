@@ -1,11 +1,17 @@
 from types import TracebackType
 from typing import Protocol
 
+from application.ports.freight_driver_assignment_repository import (
+    FreightDriverAssignmentRepository
+)
 from application.ports.freight_repository import (
     FreightRepository
 )
 from application.ports.freight_transport_unit_repository import (
     FreightTransportUnitRepository
+)
+from application.ports.freight_vehicle_record_repository import (
+    FreightVehicleRecordRepository
 )
 from application.ports.quote_repository import (
     QuoteRepository
@@ -24,6 +30,18 @@ class FreightUnitOfWork(Protocol):
     def transport_units(
         self
     ) -> FreightTransportUnitRepository:
+        ...
+
+    @property
+    def driver_assignments(
+        self
+    ) -> FreightDriverAssignmentRepository:
+        ...
+
+    @property
+    def vehicle_records(
+        self
+    ) -> FreightVehicleRecordRepository:
         ...
 
     @property

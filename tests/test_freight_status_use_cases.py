@@ -22,8 +22,29 @@ from domain.models.freight import (
     Freight,
     FreightStatus
 )
+from domain.models.freight_driver_assignment import (
+    FreightDriverAssignment
+)
 from domain.models.freight_event import (
     FreightEventType
+)
+from domain.models.freight_transport_unit import (
+    FreightTransportUnit
+)
+from domain.models.freight_vehicle_record import (
+    FreightVehicleRecord,
+    FreightVehicleType,
+    get_freight_vehicle_specification
+)
+
+
+NOW = datetime(
+    2026,
+    8,
+    25,
+    12,
+    0,
+    tzinfo=timezone.utc
 )
 
 
@@ -62,15 +83,60 @@ class FakeFreightTransportUnitRepository:
 
     def __init__(
         self,
-        count: int
+        transport_units: tuple[
+            FreightTransportUnit,
+            ...
+        ]
     ):
-        self.count = count
+        self.transport_units = transport_units
+        self.list_calls = 0
 
-    def count_by_freight_id(
+    def list_by_freight_id(
         self,
         freight_id: int
-    ) -> int:
-        return self.count
+    ) -> tuple[FreightTransportUnit, ...]:
+        self.list_calls += 1
+        return self.transport_units
+
+
+class FakeFreightDriverAssignmentRepository:
+
+    def __init__(
+        self,
+        assignments: tuple[
+            FreightDriverAssignment,
+            ...
+        ]
+    ):
+        self.assignments = assignments
+        self.list_calls = 0
+
+    def list_active_by_freight_id(
+        self,
+        freight_id: int
+    ) -> tuple[FreightDriverAssignment, ...]:
+        self.list_calls += 1
+        return self.assignments
+
+
+class FakeFreightVehicleRecordRepository:
+
+    def __init__(
+        self,
+        vehicle_records: tuple[
+            FreightVehicleRecord,
+            ...
+        ]
+    ):
+        self.vehicle_records = vehicle_records
+        self.list_calls = 0
+
+    def list_by_freight_id(
+        self,
+        freight_id: int
+    ) -> tuple[FreightVehicleRecord, ...]:
+        self.list_calls += 1
+        return self.vehicle_records
 
 
 class FakeFreightUnitOfWork:
@@ -78,12 +144,33 @@ class FakeFreightUnitOfWork:
     def __init__(
         self,
         repository: FakeFreightRepository,
-        transport_unit_count: int
+        transport_units: tuple[
+            FreightTransportUnit,
+            ...
+        ],
+        assignments: tuple[
+            FreightDriverAssignment,
+            ...
+        ],
+        vehicle_records: tuple[
+            FreightVehicleRecord,
+            ...
+        ]
     ):
         self.freights = repository
         self.transport_units = (
             FakeFreightTransportUnitRepository(
-                transport_unit_count
+                transport_units
+            )
+        )
+        self.driver_assignments = (
+            FakeFreightDriverAssignmentRepository(
+                assignments
+            )
+        )
+        self.vehicle_records = (
+            FakeFreightVehicleRecordRepository(
+                vehicle_records
             )
         )
         self.committed = False
@@ -106,16 +193,52 @@ class FakeFreightUnitOfWorkFactory:
     def __init__(
         self,
         freight: Freight | None,
-        transport_unit_count: int = 1
+        transport_units: tuple[
+            FreightTransportUnit,
+            ...
+        ] | None = None,
+        assignments: tuple[
+            FreightDriverAssignment,
+            ...
+        ] | None = None,
+        vehicle_records: tuple[
+            FreightVehicleRecord,
+            ...
+        ] | None = None
     ):
         self.repository = (
             FakeFreightRepository(
                 freight
             )
         )
-        self.transport_unit_count = (
-            transport_unit_count
-        )
+
+        if transport_units is None:
+            transport_units = (
+                make_transport_unit(
+                    101,
+                    1
+                ),
+            )
+
+        if assignments is None:
+            assignments = (
+                make_assignment(
+                    101,
+                    8
+                ),
+            )
+
+        if vehicle_records is None:
+            vehicle_records = (
+                make_vehicle(
+                    101,
+                    "ABC1D23"
+                ),
+            )
+
+        self.transport_units = transport_units
+        self.assignments = assignments
+        self.vehicle_records = vehicle_records
         self.created: list[
             FakeFreightUnitOfWork
         ] = []
@@ -125,7 +248,9 @@ class FakeFreightUnitOfWorkFactory:
     ) -> FakeFreightUnitOfWork:
         unit_of_work = FakeFreightUnitOfWork(
             self.repository,
-            self.transport_unit_count
+            self.transport_units,
+            self.assignments,
+            self.vehicle_records
         )
         self.created.append(
             unit_of_work
@@ -170,16 +295,73 @@ def make_freight(
     )
 
 
+def make_transport_unit(
+    unit_id: int,
+    position: int
+) -> FreightTransportUnit:
+    return FreightTransportUnit(
+        freight_transport_unit_id=unit_id,
+        freight_id=77,
+        position=position,
+        created_at=NOW
+    )
+
+
+def make_assignment(
+    unit_id: int,
+    driver_id: int
+) -> FreightDriverAssignment:
+    return FreightDriverAssignment(
+        freight_driver_assignment_id=(
+            1000 + unit_id
+        ),
+        freight_transport_unit_id=unit_id,
+        driver_id=driver_id,
+        started_at=NOW,
+        created_at=NOW,
+        updated_at=NOW
+    )
+
+
+def make_vehicle(
+    unit_id: int,
+    plate: str
+) -> FreightVehicleRecord:
+    vehicle_type = FreightVehicleType.TRUCK
+    specification = get_freight_vehicle_specification(
+        vehicle_type
+    )
+
+    return FreightVehicleRecord(
+        freight_vehicle_record_id=(
+            2000 + unit_id
+        ),
+        freight_transport_unit_id=unit_id,
+        vehicle_type=vehicle_type,
+        plate=plate,
+        axle_count=specification.axle_count,
+        pallet_capacity_min=(
+            specification.pallet_capacity_min
+        ),
+        pallet_capacity_max=(
+            specification.pallet_capacity_max
+        ),
+        payload_capacity_kg=(
+            specification.payload_capacity_kg
+        ),
+        created_at=NOW
+    )
+
+
 class FreightStatusUseCaseTests(
     unittest.TestCase
 ):
 
-    def test_starts_pending_freight(
+    def test_starts_pending_freight_when_unit_is_ready(
         self
     ) -> None:
         factory = FakeFreightUnitOfWorkFactory(
-            make_freight(),
-            transport_unit_count=1
+            make_freight()
         )
 
         result = StartFreight(
@@ -209,16 +391,33 @@ class FreightStatusUseCaseTests(
             factory.created[-1].committed
         )
 
+        unit_of_work = factory.created[-1]
+        self.assertEqual(
+            unit_of_work.transport_units.list_calls,
+            1
+        )
+        self.assertEqual(
+            unit_of_work.driver_assignments.list_calls,
+            1
+        )
+        self.assertEqual(
+            unit_of_work.vehicle_records.list_calls,
+            1
+        )
+
     def test_rejects_start_without_transport_unit(
         self
     ) -> None:
         factory = FakeFreightUnitOfWorkFactory(
             make_freight(),
-            transport_unit_count=0
+            transport_units=(),
+            assignments=(),
+            vehicle_records=()
         )
 
-        with self.assertRaises(
-            InvalidFreightStateError
+        with self.assertRaisesRegex(
+            InvalidFreightStateError,
+            "pelo menos uma unidade de transporte"
         ):
             StartFreight(
                 factory
@@ -228,6 +427,133 @@ class FreightStatusUseCaseTests(
 
         self.assertFalse(
             factory.created[-1].committed
+        )
+
+    def test_rejects_start_without_active_driver(
+        self
+    ) -> None:
+        factory = FakeFreightUnitOfWorkFactory(
+            make_freight(),
+            assignments=()
+        )
+
+        with self.assertRaisesRegex(
+            InvalidFreightStateError,
+            "Unidade de transporte 1.*motorista ativo"
+        ):
+            StartFreight(
+                factory
+            ).execute(
+                freight_id=77
+            )
+
+    def test_rejects_start_without_vehicle(
+        self
+    ) -> None:
+        factory = FakeFreightUnitOfWorkFactory(
+            make_freight(),
+            vehicle_records=()
+        )
+
+        with self.assertRaisesRegex(
+            InvalidFreightStateError,
+            "Unidade de transporte 1.*veículo operacional"
+        ):
+            StartFreight(
+                factory
+            ).execute(
+                freight_id=77
+            )
+
+    def test_rejects_start_when_second_unit_is_not_ready(
+        self
+    ) -> None:
+        factory = FakeFreightUnitOfWorkFactory(
+            make_freight(),
+            transport_units=(
+                make_transport_unit(
+                    101,
+                    1
+                ),
+                make_transport_unit(
+                    102,
+                    2
+                )
+            ),
+            assignments=(
+                make_assignment(
+                    101,
+                    8
+                ),
+            ),
+            vehicle_records=(
+                make_vehicle(
+                    101,
+                    "ABC1D23"
+                ),
+                make_vehicle(
+                    102,
+                    "DEF4G56"
+                )
+            )
+        )
+
+        with self.assertRaisesRegex(
+            InvalidFreightStateError,
+            "Unidade de transporte 2.*motorista ativo"
+        ):
+            StartFreight(
+                factory
+            ).execute(
+                freight_id=77
+            )
+
+    def test_starts_with_multiple_ready_units(
+        self
+    ) -> None:
+        factory = FakeFreightUnitOfWorkFactory(
+            make_freight(),
+            transport_units=(
+                make_transport_unit(
+                    101,
+                    1
+                ),
+                make_transport_unit(
+                    102,
+                    2
+                )
+            ),
+            assignments=(
+                make_assignment(
+                    101,
+                    8
+                ),
+                make_assignment(
+                    102,
+                    9
+                )
+            ),
+            vehicle_records=(
+                make_vehicle(
+                    101,
+                    "ABC1D23"
+                ),
+                make_vehicle(
+                    102,
+                    "DEF4G56"
+                )
+            )
+        )
+
+        result = StartFreight(
+            factory
+        ).execute(
+            freight_id=77
+        )
+
+        self.assertEqual(
+            result.current_status,
+            FreightStatus.IN_PROGRESS
         )
 
     def test_completes_in_progress_freight(

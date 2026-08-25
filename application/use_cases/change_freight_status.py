@@ -14,6 +14,9 @@ from application.ports.freight_unit_of_work import (
 from domain.freight_lifecycle import (
     transition_freight
 )
+from domain.freight_operational_readiness import (
+    validate_freight_operational_readiness
+)
 from domain.models.freight import (
     Freight,
     FreightStatus
@@ -69,18 +72,32 @@ class ChangeFreightStatus:
                     "Frete não encontrado"
                 )
 
-            if (
-                target_status
-                == FreightStatus.IN_PROGRESS
-                and unit_of_work.transport_units
-                .count_by_freight_id(
-                    freight_id
-                ) < 1
-            ):
-                raise InvalidFreightStateError(
-                    "Frete precisa possuir pelo menos "
-                    "uma unidade de transporte para iniciar"
-                )
+            if target_status == FreightStatus.IN_PROGRESS:
+                try:
+                    validate_freight_operational_readiness(
+                        transport_units=(
+                            unit_of_work.transport_units
+                            .list_by_freight_id(
+                                freight_id
+                            )
+                        ),
+                        active_driver_assignments=(
+                            unit_of_work.driver_assignments
+                            .list_active_by_freight_id(
+                                freight_id
+                            )
+                        ),
+                        vehicle_records=(
+                            unit_of_work.vehicle_records
+                            .list_by_freight_id(
+                                freight_id
+                            )
+                        )
+                    )
+                except ValueError as error:
+                    raise InvalidFreightStateError(
+                        str(error)
+                    ) from error
 
             try:
                 updated_freight = transition_freight(
