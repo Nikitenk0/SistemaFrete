@@ -18,8 +18,12 @@ from presentation.desktop.closed_load_quote_view import (
     ClosedLoadQuoteView
 )
 from presentation.desktop.documents_view import DocumentsView
-from presentation.desktop.tela_orcamento_complemento import TelaOrcamentoComplemento
-
+from presentation.desktop.freight_list_view import (
+    FreightListView
+)
+from presentation.desktop.tela_orcamento_complemento import (
+    TelaOrcamentoComplemento
+)
 
 
 class MainMenu:
@@ -28,20 +32,18 @@ class MainMenu:
         self,
         master,
         calculate_quote_callback,
-        generate_pdf_callback
+        generate_pdf_callback,
+        list_freights_callback,
     ):
         self.master = master
         self.calculate_quote_callback = calculate_quote_callback
         self.generate_pdf_callback = generate_pdf_callback
+        self.list_freights_callback = list_freights_callback
         self.is_dark_mode = False
 
         self.master.title("Sistema")
         self.master.geometry(f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}")
         self.master.configure(fg_color=BACKGROUND_COLOR)
-
-        # ==========================
-        # MENU
-        # ==========================
 
         self.menu = ctk.CTkFrame(
             master,
@@ -51,10 +53,6 @@ class MainMenu:
 
         self.menu.pack(side=LEFT, fill=Y)
         self.menu.pack_propagate(False)
-
-        # ==========================
-        # CONTEÚDO
-        # ==========================
 
         self.content = ctk.CTkFrame(
             master,
@@ -66,14 +64,6 @@ class MainMenu:
             expand=True,
             fill=BOTH
         )
-        # ==========================
-        # BOTÕES DO MENU
-        # ==========================
-
-        # ==========================
-        # BOTÃO ORÇAMENTO
-        # ==========================
-
 
         self.quote_button = ctk.CTkButton(
             self.menu,
@@ -89,12 +79,6 @@ class MainMenu:
             pady=5,
             padx=10
         )
-
-
-
-        # ==========================
-        # SUBMENU ORÇAMENTO
-        # ==========================
 
         self.quote_submenu = ctk.CTkFrame(
             self.master,
@@ -131,10 +115,18 @@ class MainMenu:
             padx=10
         )
 
-        # ==========================
-        # BOTÃO DOCUMENTOS
-        # ==========================
-
+        ctk.CTkButton(
+            self.menu,
+            text="Fretes",
+            command=self.show_freights,
+            fg_color=BUTTON_COLOR,
+            text_color="white",
+            font=BUTTON_FONT
+        ).pack(
+            fill=X,
+            pady=5,
+            padx=10
+        )
 
         ctk.CTkButton(
             self.menu,
@@ -148,10 +140,6 @@ class MainMenu:
             pady=5,
             padx=10
         )
-
-        # ==========================
-        # BOTÃO TEMA CLARO/ESCURO
-        # ==========================
 
         self.theme_button = ctk.CTkButton(
             self.menu,
@@ -171,8 +159,6 @@ class MainMenu:
         )
 
         self.show_home()
-
-    # ====================================
 
     def toggle_appearance_mode(self):
 
@@ -200,14 +186,10 @@ class MainMenu:
 
             self.is_dark_mode = True
 
-    # ====================================
-
     def clear_content(self):
         """Remove todos os componentes da área principal."""
         for widget in self.content.winfo_children():
             widget.destroy()
-
-    # ====================================
 
     def show_home(self):
 
@@ -219,8 +201,6 @@ class MainMenu:
             font=TITLE_FONT,
             fg_color=BACKGROUND_COLOR
         ).pack(pady=50)
-
-    # ====================================
 
     def toggle_quote_submenu(self):
 
@@ -235,10 +215,8 @@ class MainMenu:
                 y=0
             )
 
-
     def show_closed_load_quote(self):
 
-        # Fecha o submenu
         self.quote_submenu.place_forget()
 
         self.clear_content()
@@ -262,6 +240,23 @@ class MainMenu:
                 navigate_back=self.show_home
             )
         )
+
+    def show_freights(self):
+
+        self.quote_submenu.place_forget()
+
+        self.clear_content()
+
+        self.current_freight_list_view = (
+            FreightListView(
+                parent=self.content,
+                list_freights_callback=(
+                    self.list_freights_callback
+                ),
+                navigate_back=self.show_home,
+            )
+        )
+
     def show_documents(self):
 
         self.quote_submenu.place_forget()
