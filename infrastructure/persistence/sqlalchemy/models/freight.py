@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     BigInteger,
@@ -8,11 +9,14 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Identity,
+    Index,
+    Numeric,
     SmallInteger,
     String,
     Text,
     UniqueConstraint,
-    func
+    func,
+    text
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -20,9 +24,7 @@ from sqlalchemy.orm import (
     relationship
 )
 
-from infrastructure.persistence.sqlalchemy.base import (
-    Base
-)
+from infrastructure.persistence.sqlalchemy.base import Base
 
 
 class FreightModel(Base):
@@ -75,37 +77,23 @@ class FreightModel(Base):
         index=True
     )
 
-    started_at: Mapped[
-        datetime | None
-    ] = mapped_column(
-        DateTime(
-            timezone=True
-        ),
+    started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True
     )
 
-    completed_at: Mapped[
-        datetime | None
-    ] = mapped_column(
-        DateTime(
-            timezone=True
-        ),
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True
     )
 
-    cancelled_at: Mapped[
-        datetime | None
-    ] = mapped_column(
-        DateTime(
-            timezone=True
-        ),
+    cancelled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True
     )
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(
-            timezone=True
-        ),
+        DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
         index=True
@@ -119,9 +107,7 @@ class FreightModel(Base):
         nullable=True
     )
 
-    events: Mapped[
-        list[FreightEventModel]
-    ] = relationship(
+    events: Mapped[list[FreightEventModel]] = relationship(
         back_populates="freight",
         cascade="all, delete-orphan",
         order_by="FreightEventModel.freight_event_id"
@@ -179,9 +165,7 @@ class FreightTransportUnitModel(Base):
     )
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(
-            timezone=True
-        ),
+        DateTime(timezone=True),
         server_default=func.now(),
         nullable=False
     )
@@ -194,10 +178,148 @@ class FreightTransportUnitModel(Base):
         nullable=True
     )
 
-    freight: Mapped[
-        FreightModel
-    ] = relationship(
+    freight: Mapped[FreightModel] = relationship(
         back_populates="transport_units"
+    )
+
+    driver_assignments: Mapped[
+        list[FreightDriverAssignmentModel]
+    ] = relationship(
+        back_populates="transport_unit",
+        cascade="all, delete-orphan",
+        order_by=(
+            "FreightDriverAssignmentModel.started_at, "
+            "FreightDriverAssignmentModel."
+            "freight_driver_assignment_id"
+        )
+    )
+
+
+class FreightDriverAssignmentModel(Base):
+
+    __tablename__ = "freight_driver_assignments"
+
+    __table_args__ = (
+        Index(
+            "uq_freight_driver_assignments_active_unit",
+            "freight_transport_unit_id",
+            unique=True,
+            postgresql_where=text(
+                "ended_at IS NULL"
+            )
+        ),
+        Index(
+            "uq_freight_driver_assignments_active_driver",
+            "driver_id",
+            unique=True,
+            postgresql_where=text(
+                "ended_at IS NULL"
+            )
+        ),
+        CheckConstraint(
+            (
+                "actual_driver_amount IS NULL OR "
+                "actual_driver_amount >= 0"
+            ),
+            name=(
+                "ck_freight_driver_assignments_"
+                "actual_driver_amount_non_negative"
+            )
+        ),
+        CheckConstraint(
+            (
+                "(ended_at IS NULL AND "
+                "actual_driver_amount IS NULL) OR "
+                "(ended_at IS NOT NULL AND "
+                "actual_driver_amount IS NOT NULL)"
+            ),
+            name=(
+                "ck_freight_driver_assignments_"
+                "completion_pair"
+            )
+        ),
+        CheckConstraint(
+            "ended_at IS NULL OR ended_at >= started_at",
+            name=(
+                "ck_freight_driver_assignments_"
+                "ended_after_started"
+            )
+        ),
+    )
+
+    freight_driver_assignment_id: Mapped[int] = mapped_column(
+        BigInteger,
+        Identity(),
+        primary_key=True
+    )
+
+    freight_transport_unit_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "freight_transport_units.freight_transport_unit_id",
+            ondelete="CASCADE"
+        ),
+        nullable=False,
+        index=True
+    )
+
+    driver_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "drivers.driver_id",
+            ondelete="RESTRICT"
+        ),
+        nullable=False,
+        index=True
+    )
+
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True
+    )
+
+    ended_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True
+    )
+
+    actual_driver_amount: Mapped[
+        Decimal | None
+    ] = mapped_column(
+        Numeric(14, 2),
+        nullable=True
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+
+    created_by: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "users.user_id",
+            ondelete="SET NULL"
+        ),
+        nullable=True
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+
+    updated_by: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "users.user_id",
+            ondelete="SET NULL"
+        ),
+        nullable=True
+    )
+
+    transport_unit: Mapped[FreightTransportUnitModel] = relationship(
+        back_populates="driver_assignments"
     )
 
 
@@ -237,9 +359,7 @@ class FreightEventModel(Base):
         nullable=False
     )
 
-    previous_status: Mapped[
-        str | None
-    ] = mapped_column(
+    previous_status: Mapped[str | None] = mapped_column(
         String(30),
         nullable=True
     )
@@ -249,16 +369,12 @@ class FreightEventModel(Base):
         nullable=False
     )
 
-    observation: Mapped[
-        str | None
-    ] = mapped_column(
+    observation: Mapped[str | None] = mapped_column(
         Text,
         nullable=True
     )
 
-    user_id: Mapped[
-        int | None
-    ] = mapped_column(
+    user_id: Mapped[int | None] = mapped_column(
         ForeignKey(
             "users.user_id",
             ondelete="SET NULL"
@@ -267,16 +383,12 @@ class FreightEventModel(Base):
     )
 
     occurred_at: Mapped[datetime] = mapped_column(
-        DateTime(
-            timezone=True
-        ),
+        DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
         index=True
     )
 
-    freight: Mapped[
-        FreightModel
-    ] = relationship(
+    freight: Mapped[FreightModel] = relationship(
         back_populates="events"
     )
