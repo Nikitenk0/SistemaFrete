@@ -118,6 +118,13 @@ class FakeFreightDriverAssignmentRepository:
         self.list_calls += 1
         return self.assignments
 
+    def list_by_freight_id(
+        self,
+        freight_id: int
+    ) -> tuple[FreightDriverAssignment, ...]:
+        self.list_calls += 1
+        return self.assignments
+
 
 class FakeFreightVehicleRecordRepository:
 
@@ -318,6 +325,25 @@ def make_assignment(
         freight_transport_unit_id=unit_id,
         driver_id=driver_id,
         started_at=NOW,
+        created_at=NOW,
+        updated_at=NOW
+    )
+
+
+def make_finished_assignment(
+    unit_id: int,
+    driver_id: int,
+    amount: str = "1000.00"
+) -> FreightDriverAssignment:
+    return FreightDriverAssignment(
+        freight_driver_assignment_id=(
+            1000 + unit_id + driver_id
+        ),
+        freight_transport_unit_id=unit_id,
+        driver_id=driver_id,
+        started_at=NOW,
+        ended_at=NOW,
+        actual_driver_amount=amount,
         created_at=NOW,
         updated_at=NOW
     )
@@ -562,6 +588,12 @@ class FreightStatusUseCaseTests(
         factory = FakeFreightUnitOfWorkFactory(
             make_freight(
                 FreightStatus.IN_PROGRESS
+            ),
+            assignments=(
+                make_finished_assignment(
+                    101,
+                    8
+                ),
             )
         )
 
@@ -581,6 +613,195 @@ class FreightStatusUseCaseTests(
         self.assertEqual(
             result.events[-1].event_type,
             FreightEventType.COMPLETED
+        )
+
+        unit_of_work = factory.created[-1]
+        self.assertEqual(
+            unit_of_work.transport_units.list_calls,
+            1
+        )
+        self.assertEqual(
+            unit_of_work.driver_assignments.list_calls,
+            1
+        )
+        self.assertEqual(
+            unit_of_work.vehicle_records.list_calls,
+            1
+        )
+
+    def test_rejects_complete_without_driver_assignment(
+        self
+    ) -> None:
+        factory = FakeFreightUnitOfWorkFactory(
+            make_freight(
+                FreightStatus.IN_PROGRESS
+            ),
+            assignments=()
+        )
+
+        with self.assertRaisesRegex(
+            InvalidFreightStateError,
+            "Unidade de transporte 1.*participação de motorista"
+        ):
+            CompleteFreight(
+                factory
+            ).execute(
+                freight_id=77
+            )
+
+        self.assertFalse(
+            factory.created[-1].committed
+        )
+
+    def test_rejects_complete_with_active_driver(
+        self
+    ) -> None:
+        factory = FakeFreightUnitOfWorkFactory(
+            make_freight(
+                FreightStatus.IN_PROGRESS
+            )
+        )
+
+        with self.assertRaisesRegex(
+            InvalidFreightStateError,
+            "Unidade de transporte 1.*motorista ativo"
+        ):
+            CompleteFreight(
+                factory
+            ).execute(
+                freight_id=77
+            )
+
+    def test_rejects_complete_without_vehicle(
+        self
+    ) -> None:
+        factory = FakeFreightUnitOfWorkFactory(
+            make_freight(
+                FreightStatus.IN_PROGRESS
+            ),
+            assignments=(
+                make_finished_assignment(
+                    101,
+                    8
+                ),
+            ),
+            vehicle_records=()
+        )
+
+        with self.assertRaisesRegex(
+            InvalidFreightStateError,
+            "Unidade de transporte 1.*veículo operacional"
+        ):
+            CompleteFreight(
+                factory
+            ).execute(
+                freight_id=77
+            )
+
+    def test_rejects_complete_when_second_unit_has_active_driver(
+        self
+    ) -> None:
+        factory = FakeFreightUnitOfWorkFactory(
+            make_freight(
+                FreightStatus.IN_PROGRESS
+            ),
+            transport_units=(
+                make_transport_unit(
+                    101,
+                    1
+                ),
+                make_transport_unit(
+                    102,
+                    2
+                )
+            ),
+            assignments=(
+                make_finished_assignment(
+                    101,
+                    8
+                ),
+                make_assignment(
+                    102,
+                    9
+                )
+            ),
+            vehicle_records=(
+                make_vehicle(
+                    101,
+                    "ABC1D23"
+                ),
+                make_vehicle(
+                    102,
+                    "DEF4G56"
+                )
+            )
+        )
+
+        with self.assertRaisesRegex(
+            InvalidFreightStateError,
+            "Unidade de transporte 2.*motorista ativo"
+        ):
+            CompleteFreight(
+                factory
+            ).execute(
+                freight_id=77
+            )
+
+    def test_completes_with_multiple_finished_assignments(
+        self
+    ) -> None:
+        factory = FakeFreightUnitOfWorkFactory(
+            make_freight(
+                FreightStatus.IN_PROGRESS
+            ),
+            transport_units=(
+                make_transport_unit(
+                    101,
+                    1
+                ),
+                make_transport_unit(
+                    102,
+                    2
+                )
+            ),
+            assignments=(
+                make_finished_assignment(
+                    101,
+                    8,
+                    "2000.00"
+                ),
+                make_finished_assignment(
+                    101,
+                    10,
+                    "2300.00"
+                ),
+                make_finished_assignment(
+                    102,
+                    9,
+                    "3800.00"
+                )
+            ),
+            vehicle_records=(
+                make_vehicle(
+                    101,
+                    "ABC1D23"
+                ),
+                make_vehicle(
+                    102,
+                    "DEF4G56"
+                )
+            )
+        )
+
+        result = CompleteFreight(
+            factory
+        ).execute(
+            freight_id=77
+        )
+
+        self.assertEqual(
+            result.current_status,
+            FreightStatus.COMPLETED
         )
 
     def test_cancels_pending_freight(

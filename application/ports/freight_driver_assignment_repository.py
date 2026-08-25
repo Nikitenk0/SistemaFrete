@@ -48,3 +48,9 @@ class FreightDriverAssignmentRepository(Protocol):
         freight_id: int
     ) -> tuple[FreightDriverAssignment, ...]:
         ...
+
+    def list_by_freight_id(
+        self,
+        freight_id: int
+    ) -> tuple[FreightDriverAssignment, ...]:
+        ...

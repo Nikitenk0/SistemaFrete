@@ -213,6 +213,48 @@ class SqlAlchemyFreightDriverAssignmentRepository(
             for model in models
         )
 
+    def list_by_freight_id(
+        self,
+        freight_id: int
+    ) -> tuple[FreightDriverAssignment, ...]:
+
+        try:
+            models = self._session.scalars(
+                select(
+                    FreightDriverAssignmentModel
+                )
+                .join(
+                    FreightTransportUnitModel,
+                    FreightTransportUnitModel
+                    .freight_transport_unit_id
+                    == FreightDriverAssignmentModel
+                    .freight_transport_unit_id
+                )
+                .where(
+                    FreightTransportUnitModel.freight_id
+                    == freight_id
+                )
+                .order_by(
+                    FreightTransportUnitModel.position,
+                    FreightDriverAssignmentModel.started_at,
+                    FreightDriverAssignmentModel
+                    .freight_driver_assignment_id
+                )
+            ).all()
+
+        except SQLAlchemyError as error:
+            raise FreightDriverAssignmentPersistenceError(
+                "Não foi possível consultar as participações "
+                "de motorista do frete"
+            ) from error
+
+        return tuple(
+            self._to_domain(
+                model
+            )
+            for model in models
+        )
+
     def list_active_by_freight_id(
         self,
         freight_id: int

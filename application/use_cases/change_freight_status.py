@@ -11,6 +11,9 @@ from application.exceptions import (
 from application.ports.freight_unit_of_work import (
     FreightUnitOfWorkFactory
 )
+from domain.freight_completion_readiness import (
+    validate_freight_completion_readiness
+)
 from domain.freight_lifecycle import (
     transition_freight
 )
@@ -84,6 +87,36 @@ class ChangeFreightStatus:
                         active_driver_assignments=(
                             unit_of_work.driver_assignments
                             .list_active_by_freight_id(
+                                freight_id
+                            )
+                        ),
+                        vehicle_records=(
+                            unit_of_work.vehicle_records
+                            .list_by_freight_id(
+                                freight_id
+                            )
+                        )
+                    )
+                except ValueError as error:
+                    raise InvalidFreightStateError(
+                        str(error)
+                    ) from error
+
+            if (
+                target_status == FreightStatus.COMPLETED
+                and freight.current_status == FreightStatus.IN_PROGRESS
+            ):
+                try:
+                    validate_freight_completion_readiness(
+                        transport_units=(
+                            unit_of_work.transport_units
+                            .list_by_freight_id(
+                                freight_id
+                            )
+                        ),
+                        driver_assignments=(
+                            unit_of_work.driver_assignments
+                            .list_by_freight_id(
                                 freight_id
                             )
                         ),
