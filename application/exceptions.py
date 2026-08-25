@@ -128,3 +128,7 @@ class FreightExpensePersistenceError(ApplicationError):
 
 class FreightExpenseNotFoundError(ApplicationError):
     """Despesa realizada do frete não encontrada."""
+
+
+class FreightFinancialResultPersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar fechamento financeiro do frete."""
