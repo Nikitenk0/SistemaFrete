@@ -13,7 +13,19 @@ class DriverRepository(Protocol):
     ) -> Driver:
         ...
 
+    def save(
+        self,
+        driver: Driver
+    ) -> Driver:
+        ...
+
     def get_by_id(
+        self,
+        driver_id: int
+    ) -> Driver | None:
+        ...
+
+    def get_by_id_for_update(
         self,
         driver_id: int
     ) -> Driver | None:

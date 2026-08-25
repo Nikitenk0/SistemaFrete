@@ -74,23 +74,94 @@ class SqlAlchemyDriverRepository(
             self._session.flush()
 
         except IntegrityError as error:
-
-            constraint_name = self._get_constraint_name(
-                error
-            )
-
-            if constraint_name == "uq_drivers_cpf":
-                raise DriverAlreadyExistsError(
-                    "CPF já cadastrado para outro motorista"
-                ) from error
-
-            raise DriverPersistenceError(
+            self._raise_integrity_error(
+                error,
                 "Não foi possível salvar o motorista"
-            ) from error
+            )
 
         except SQLAlchemyError as error:
             raise DriverPersistenceError(
                 "Não foi possível salvar o motorista"
+            ) from error
+
+        return self._to_domain(
+            model
+        )
+
+    def save(
+        self,
+        driver: Driver
+    ) -> Driver:
+
+        if driver.driver_id is None:
+            raise ValueError(
+                "Motorista precisa possuir driver_id"
+            )
+
+        try:
+            model = self._session.scalar(
+                select(
+                    DriverModel
+                )
+                .options(
+                    *self._load_options()
+                )
+                .where(
+                    DriverModel.driver_id
+                    == driver.driver_id
+                )
+            )
+
+            if model is None:
+                raise DriverPersistenceError(
+                    "Motorista não encontrado para atualização"
+                )
+
+            model.name = driver.name
+            model.cpf = driver.cpf
+            model.rg = driver.rg
+            model.birth_date = driver.birth_date
+            model.cnh_number = driver.cnh_number
+            model.cnh_category = driver.cnh_category
+            model.cnh_expiration_date = (
+                driver.cnh_expiration_date
+            )
+            model.status = driver.status.value
+            model.updated_at = driver.updated_at
+            model.updated_by = driver.updated_by
+
+            self._clear_primary_flags(
+                model
+            )
+            self._session.flush()
+
+            self._sync_contacts(
+                model,
+                driver.contacts
+            )
+            self._sync_addresses(
+                model,
+                driver.addresses
+            )
+            self._sync_bank_accounts(
+                model,
+                driver.bank_accounts
+            )
+
+            self._session.flush()
+
+        except IntegrityError as error:
+            self._raise_integrity_error(
+                error,
+                "Não foi possível atualizar o motorista"
+            )
+
+        except DriverPersistenceError:
+            raise
+
+        except SQLAlchemyError as error:
+            raise DriverPersistenceError(
+                "Não foi possível atualizar o motorista"
             ) from error
 
         return self._to_domain(
@@ -119,6 +190,38 @@ class SqlAlchemyDriverRepository(
         except SQLAlchemyError as error:
             raise DriverPersistenceError(
                 "Não foi possível consultar o motorista"
+            ) from error
+
+        if model is None:
+            return None
+
+        return self._to_domain(
+            model
+        )
+
+    def get_by_id_for_update(
+        self,
+        driver_id: int
+    ) -> Driver | None:
+
+        try:
+            model = self._session.scalar(
+                select(
+                    DriverModel
+                )
+                .options(
+                    *self._load_options()
+                )
+                .where(
+                    DriverModel.driver_id
+                    == driver_id
+                )
+                .with_for_update()
+            )
+
+        except SQLAlchemyError as error:
+            raise DriverPersistenceError(
+                "Não foi possível bloquear o motorista para atualização"
             ) from error
 
         if model is None:
@@ -246,6 +349,128 @@ class SqlAlchemyDriverRepository(
             )
         )
 
+    @staticmethod
+    def _clear_primary_flags(
+        model: DriverModel
+    ) -> None:
+
+        for contact in model.contacts:
+            contact.is_primary = False
+
+        for address in model.addresses:
+            address.is_primary = False
+
+        for bank_account in model.bank_accounts:
+            bank_account.is_primary = False
+
+    def _sync_contacts(
+        self,
+        model: DriverModel,
+        contacts: tuple[DriverContact, ...]
+    ) -> None:
+
+        existing = {
+            item.driver_contact_id: item
+            for item in model.contacts
+        }
+        synchronized: list[DriverContactModel] = []
+
+        for contact in contacts:
+            if contact.driver_contact_id is None:
+                child = self._to_contact_model(
+                    contact
+                )
+            else:
+                child = existing.get(
+                    contact.driver_contact_id
+                )
+                if child is None:
+                    raise DriverPersistenceError(
+                        "Contato não pertence ao motorista"
+                    )
+                self._apply_contact(
+                    child,
+                    contact
+                )
+
+            synchronized.append(
+                child
+            )
+
+        model.contacts = synchronized
+
+    def _sync_addresses(
+        self,
+        model: DriverModel,
+        addresses: tuple[DriverAddress, ...]
+    ) -> None:
+
+        existing = {
+            item.driver_address_id: item
+            for item in model.addresses
+        }
+        synchronized: list[DriverAddressModel] = []
+
+        for address in addresses:
+            if address.driver_address_id is None:
+                child = self._to_address_model(
+                    address
+                )
+            else:
+                child = existing.get(
+                    address.driver_address_id
+                )
+                if child is None:
+                    raise DriverPersistenceError(
+                        "Endereço não pertence ao motorista"
+                    )
+                self._apply_address(
+                    child,
+                    address
+                )
+
+            synchronized.append(
+                child
+            )
+
+        model.addresses = synchronized
+
+    def _sync_bank_accounts(
+        self,
+        model: DriverModel,
+        bank_accounts: tuple[DriverBankAccount, ...]
+    ) -> None:
+
+        existing = {
+            item.driver_bank_account_id: item
+            for item in model.bank_accounts
+        }
+        synchronized: list[DriverBankAccountModel] = []
+
+        for bank_account in bank_accounts:
+            if bank_account.driver_bank_account_id is None:
+                child = self._to_bank_account_model(
+                    bank_account
+                )
+            else:
+                child = existing.get(
+                    bank_account.driver_bank_account_id
+                )
+                if child is None:
+                    raise DriverPersistenceError(
+                        "Conta bancária não pertence ao motorista"
+                    )
+                self._apply_bank_account(
+                    child,
+                    bank_account
+                )
+
+            synchronized.append(
+                child
+            )
+
+        model.bank_accounts = synchronized
+
     @classmethod
     def _to_model(
         cls,
@@ -319,6 +544,19 @@ class SqlAlchemyDriverRepository(
         return model
 
     @staticmethod
+    def _apply_contact(
+        model: DriverContactModel,
+        contact: DriverContact
+    ) -> None:
+
+        model.phone = contact.phone
+        model.secondary_phone = contact.secondary_phone
+        model.email = contact.email
+        model.is_primary = contact.is_primary
+        model.updated_at = contact.updated_at
+        model.updated_by = contact.updated_by
+
+    @staticmethod
     def _to_address_model(
         address: DriverAddress
     ) -> DriverAddressModel:
@@ -344,6 +582,24 @@ class SqlAlchemyDriverRepository(
             model.updated_at = address.updated_at
 
         return model
+
+    @staticmethod
+    def _apply_address(
+        model: DriverAddressModel,
+        address: DriverAddress
+    ) -> None:
+
+        model.address_type = address.address_type.value
+        model.postal_code = address.postal_code
+        model.street = address.street
+        model.number = address.number
+        model.complement = address.complement
+        model.district = address.district
+        model.city = address.city
+        model.state = address.state
+        model.is_primary = address.is_primary
+        model.updated_at = address.updated_at
+        model.updated_by = address.updated_by
 
     @staticmethod
     def _to_bank_account_model(
@@ -374,6 +630,27 @@ class SqlAlchemyDriverRepository(
             model.updated_at = bank_account.updated_at
 
         return model
+
+    @staticmethod
+    def _apply_bank_account(
+        model: DriverBankAccountModel,
+        bank_account: DriverBankAccount
+    ) -> None:
+
+        model.bank_code = bank_account.bank_code
+        model.agency = bank_account.agency
+        model.account = bank_account.account
+        model.account_digit = bank_account.account_digit
+        model.account_type = bank_account.account_type.value
+        model.pix_key_type = (
+            bank_account.pix_key_type.value
+            if bank_account.pix_key_type is not None
+            else None
+        )
+        model.pix_key = bank_account.pix_key
+        model.is_primary = bank_account.is_primary
+        model.updated_at = bank_account.updated_at
+        model.updated_by = bank_account.updated_by
 
     @staticmethod
     def _to_domain(
@@ -486,6 +763,29 @@ class SqlAlchemyDriverRepository(
             for character in cpf
             if character.isdigit()
         )
+
+    @classmethod
+    def _raise_integrity_error(
+        cls,
+        error: IntegrityError,
+        fallback_message: str
+    ) -> None:
+
+        constraint_name = cls._get_constraint_name(
+            error
+        )
+
+        if constraint_name in {
+            "uq_drivers_cpf",
+            "drivers_cpf_key"
+        }:
+            raise DriverAlreadyExistsError(
+                "CPF já cadastrado para outro motorista"
+            ) from error
+
+        raise DriverPersistenceError(
+            fallback_message
+        ) from error
 
     @staticmethod
     def _get_constraint_name(
