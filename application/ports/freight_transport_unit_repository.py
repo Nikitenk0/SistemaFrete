@@ -13,6 +13,12 @@ class FreightTransportUnitRepository(Protocol):
     ) -> FreightTransportUnit:
         ...
 
+    def get_by_id(
+        self,
+        freight_transport_unit_id: int
+    ) -> FreightTransportUnit | None:
+        ...
+
     def list_by_freight_id(
         self,
         freight_id: int

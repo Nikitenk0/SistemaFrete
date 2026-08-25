@@ -37,6 +37,7 @@ class CustomerNotFoundError(ApplicationError):
 class CustomerPersistenceError(ApplicationError):
     """Falha ao persistir ou consultar dados do cliente."""
 
+
 class QuoteNotFoundError(ApplicationError):
     """Orçamento não encontrado."""
 
@@ -48,12 +49,14 @@ class QuotePersistenceError(ApplicationError):
 class QuoteNumberGenerationError(ApplicationError):
     """Falha ao gerar número do orçamento."""
 
+
 class QuotePricingPolicyError(ApplicationError):
     """Falha ao obter a política de precificação."""
 
 
 class QuoteVersionCalculationError(ApplicationError):
     """Falha ao calcular uma versão do orçamento."""
+
 
 class InvalidQuoteStateError(ApplicationError):
     """O orçamento não permite a operação no estado atual."""
@@ -93,3 +96,23 @@ class DriverAlreadyExistsError(ApplicationError):
 
 class DriverPersistenceError(ApplicationError):
     """Falha ao persistir ou consultar motorista."""
+
+
+class DriverNotFoundError(ApplicationError):
+    """Motorista não encontrado."""
+
+
+class InvalidDriverStateError(ApplicationError):
+    """O motorista não permite a operação no estado atual."""
+
+
+class FreightTransportUnitNotFoundError(ApplicationError):
+    """Unidade de transporte do frete não encontrada."""
+
+
+class FreightDriverAssignmentNotFoundError(ApplicationError):
+    """Participação de motorista no frete não encontrada."""
+
+
+class FreightDriverAssignmentPersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar participação de motorista."""

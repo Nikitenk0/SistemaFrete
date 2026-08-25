@@ -93,6 +93,34 @@ class SqlAlchemyFreightTransportUnitRepository(
             model
         )
 
+    def get_by_id(
+        self,
+        freight_transport_unit_id: int
+    ) -> FreightTransportUnit | None:
+
+        try:
+            model = self._session.scalar(
+                select(
+                    FreightTransportUnitModel
+                ).where(
+                    FreightTransportUnitModel.freight_transport_unit_id
+                    == freight_transport_unit_id
+                )
+            )
+
+        except SQLAlchemyError as error:
+            raise FreightPersistenceError(
+                "Não foi possível consultar a unidade "
+                "de transporte do frete"
+            ) from error
+
+        if model is None:
+            return None
+
+        return self._to_domain(
+            model
+        )
+
     def list_by_freight_id(
         self,
         freight_id: int

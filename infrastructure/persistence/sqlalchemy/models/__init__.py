@@ -12,6 +12,7 @@ from infrastructure.persistence.sqlalchemy.models.driver import (
     DriverModel
 )
 from infrastructure.persistence.sqlalchemy.models.freight import (
+    FreightDriverAssignmentModel,
     FreightEventModel,
     FreightModel,
     FreightTransportUnitModel
@@ -46,6 +47,7 @@ __all__ = (
     "DriverBankAccountModel",
     "DriverContactModel",
     "DriverModel",
+    "FreightDriverAssignmentModel",
     "FreightEventModel",
     "FreightModel",
     "FreightTransportUnitModel",

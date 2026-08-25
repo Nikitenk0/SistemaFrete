@@ -1,0 +1,185 @@
+from types import TracebackType
+
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import (
+    Session,
+    sessionmaker
+)
+
+from application.exceptions import (
+    FreightDriverAssignmentPersistenceError
+)
+from application.ports.driver_repository import (
+    DriverRepository
+)
+from application.ports.freight_driver_assignment_repository import (
+    FreightDriverAssignmentRepository
+)
+from application.ports.freight_driver_assignment_unit_of_work import (
+    FreightDriverAssignmentUnitOfWork
+)
+from application.ports.freight_repository import (
+    FreightRepository
+)
+from application.ports.freight_transport_unit_repository import (
+    FreightTransportUnitRepository
+)
+from infrastructure.persistence.sqlalchemy.driver_repository import (
+    SqlAlchemyDriverRepository
+)
+from infrastructure.persistence.sqlalchemy.freight_driver_assignment_repository import (
+    SqlAlchemyFreightDriverAssignmentRepository
+)
+from infrastructure.persistence.sqlalchemy.freight_repository import (
+    SqlAlchemyFreightRepository
+)
+from infrastructure.persistence.sqlalchemy.freight_transport_unit_repository import (
+    SqlAlchemyFreightTransportUnitRepository
+)
+
+
+class SqlAlchemyFreightDriverAssignmentUnitOfWork(
+    FreightDriverAssignmentUnitOfWork
+):
+
+    def __init__(
+        self,
+        session_factory: sessionmaker[Session]
+    ):
+        self._session_factory = session_factory
+        self._session: Session | None = None
+        self._freights: FreightRepository | None = None
+        self._transport_units: (
+            FreightTransportUnitRepository | None
+        ) = None
+        self._drivers: DriverRepository | None = None
+        self._driver_assignments: (
+            FreightDriverAssignmentRepository | None
+        ) = None
+
+    @property
+    def freights(
+        self
+    ) -> FreightRepository:
+        if self._freights is None:
+            raise RuntimeError(
+                "Unit of Work não iniciado"
+            )
+        return self._freights
+
+    @property
+    def transport_units(
+        self
+    ) -> FreightTransportUnitRepository:
+        if self._transport_units is None:
+            raise RuntimeError(
+                "Unit of Work não iniciado"
+            )
+        return self._transport_units
+
+    @property
+    def drivers(
+        self
+    ) -> DriverRepository:
+        if self._drivers is None:
+            raise RuntimeError(
+                "Unit of Work não iniciado"
+            )
+        return self._drivers
+
+    @property
+    def driver_assignments(
+        self
+    ) -> FreightDriverAssignmentRepository:
+        if self._driver_assignments is None:
+            raise RuntimeError(
+                "Unit of Work não iniciado"
+            )
+        return self._driver_assignments
+
+    def __enter__(
+        self
+    ) -> "SqlAlchemyFreightDriverAssignmentUnitOfWork":
+
+        self._session = self._session_factory()
+        self._freights = SqlAlchemyFreightRepository(
+            self._session
+        )
+        self._transport_units = (
+            SqlAlchemyFreightTransportUnitRepository(
+                self._session
+            )
+        )
+        self._drivers = SqlAlchemyDriverRepository(
+            self._session
+        )
+        self._driver_assignments = (
+            SqlAlchemyFreightDriverAssignmentRepository(
+                self._session
+            )
+        )
+
+        return self
+
+    def __exit__(
+        self,
+        exception_type: type[BaseException] | None,
+        exception_value: BaseException | None,
+        traceback: TracebackType | None
+    ) -> None:
+
+        try:
+            if exception_type is not None:
+                self.rollback()
+
+        finally:
+            if self._session is not None:
+                self._session.close()
+
+            self._session = None
+            self._freights = None
+            self._transport_units = None
+            self._drivers = None
+            self._driver_assignments = None
+
+    def commit(
+        self
+    ) -> None:
+
+        if self._session is None:
+            raise RuntimeError(
+                "Unit of Work não iniciado"
+            )
+
+        try:
+            self._session.commit()
+
+        except SQLAlchemyError as error:
+            self._session.rollback()
+            raise FreightDriverAssignmentPersistenceError(
+                "Não foi possível confirmar a operação "
+                "da participação de motorista"
+            ) from error
+
+    def rollback(
+        self
+    ) -> None:
+
+        if self._session is not None:
+            self._session.rollback()
+
+
+class SqlAlchemyFreightDriverAssignmentUnitOfWorkFactory:
+
+    def __init__(
+        self,
+        session_factory: sessionmaker[Session]
+    ):
+        self._session_factory = session_factory
+
+    def create(
+        self
+    ) -> SqlAlchemyFreightDriverAssignmentUnitOfWork:
+        return SqlAlchemyFreightDriverAssignmentUnitOfWork(
+            self._session_factory
+        )
