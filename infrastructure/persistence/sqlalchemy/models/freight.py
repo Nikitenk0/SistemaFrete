@@ -85,7 +85,8 @@ class FreightModel(Base):
 
     completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
-        nullable=True
+        nullable=True,
+        index=True
     )
 
     cancelled_at: Mapped[datetime | None] = mapped_column(
