@@ -132,3 +132,19 @@ class FreightExpenseNotFoundError(ApplicationError):
 
 class FreightFinancialResultPersistenceError(ApplicationError):
     """Falha ao persistir ou consultar fechamento financeiro do frete."""
+
+
+class InvalidVehicleDataError(ApplicationError):
+    """Os dados fornecidos para o veículo são inválidos."""
+
+
+class VehicleAlreadyExistsError(ApplicationError):
+    """Já existe veículo com a placa informada."""
+
+
+class VehicleNotFoundError(ApplicationError):
+    """Veículo não encontrado."""
+
+
+class VehiclePersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar veículo."""

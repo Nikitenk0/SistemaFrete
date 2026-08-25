@@ -1,17 +1,14 @@
 from dataclasses import dataclass
 from datetime import datetime
-from enum import StrEnum
+
+from domain.models.vehicle import (
+    VehicleType,
+    normalize_vehicle_plate
+)
 
 
-class FreightVehicleType(StrEnum):
-
-    CAMINHAO_3_4 = "CAMINHAO_3_4"
-    TOCO = "TOCO"
-    TRUCK = "TRUCK"
-    BITRUCK = "BITRUCK"
-    CARRETA = "CARRETA"
-    CARRETA_LS = "CARRETA_LS"
-    CARRETA_VANDERLEIA = "CARRETA_VANDERLEIA"
+# Compatibilidade com o nome já usado pelo domínio operacional do frete.
+FreightVehicleType = VehicleType
 
 
 @dataclass(frozen=True)
@@ -122,26 +119,9 @@ class FreightVehicleRecord:
                 "vehicle_type inválido"
             ) from error
 
-        plate = "".join(
-            character
-            for character in self.plate.upper()
-            if character not in {"-", " "}
+        plate = normalize_vehicle_plate(
+            self.plate
         )
-
-        allowed_plate_characters = (
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        )
-
-        if (
-            len(plate) != 7
-            or any(
-                character not in allowed_plate_characters
-                for character in plate
-            )
-        ):
-            raise ValueError(
-                "plate inválida"
-            )
 
         if self.axle_count < 1:
             raise ValueError(

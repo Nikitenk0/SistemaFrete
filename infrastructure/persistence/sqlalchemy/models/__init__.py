@@ -36,6 +36,9 @@ from infrastructure.persistence.sqlalchemy.models.quote import (
 from infrastructure.persistence.sqlalchemy.models.user import (
     UserModel
 )
+from infrastructure.persistence.sqlalchemy.models.vehicle import (
+    VehicleModel
+)
 
 from infrastructure.persistence.sqlalchemy.models.pricing_policy import (
     AdministrativeCostPolicyModel,
@@ -69,6 +72,7 @@ __all__ = (
     "QuoteTransportCompositionModel",
     "QuoteVersionModel",
     "UserModel",
+    "VehicleModel",
     "AdministrativeCostPolicyModel",
     "MarginBandModel",
     "MarginTableModel",
