@@ -10,6 +10,7 @@ from sqlalchemy import (
     ForeignKey,
     Identity,
     Index,
+    Integer,
     Numeric,
     SmallInteger,
     String,
@@ -194,6 +195,14 @@ class FreightTransportUnitModel(Base):
         )
     )
 
+    vehicle_record: Mapped[
+        FreightVehicleRecordModel | None
+    ] = relationship(
+        back_populates="transport_unit",
+        cascade="all, delete-orphan",
+        uselist=False
+    )
+
 
 class FreightDriverAssignmentModel(Base):
 
@@ -320,6 +329,145 @@ class FreightDriverAssignmentModel(Base):
 
     transport_unit: Mapped[FreightTransportUnitModel] = relationship(
         back_populates="driver_assignments"
+    )
+
+
+class FreightVehicleRecordModel(Base):
+
+    __tablename__ = "freight_vehicle_records"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "freight_transport_unit_id",
+            name=(
+                "uq_freight_vehicle_records_"
+                "freight_transport_unit_id"
+            )
+        ),
+        CheckConstraint(
+            (
+                "vehicle_type IN ("
+                "'CAMINHAO_3_4', 'TOCO', 'TRUCK', "
+                "'BITRUCK', 'CARRETA', 'CARRETA_LS', "
+                "'CARRETA_VANDERLEIA'"
+                ")"
+            ),
+            name=(
+                "ck_freight_vehicle_records_"
+                "vehicle_type"
+            )
+        ),
+        CheckConstraint(
+            "plate ~ '^[A-Z0-9]{7}$'",
+            name=(
+                "ck_freight_vehicle_records_plate"
+            )
+        ),
+        CheckConstraint(
+            (
+                "(vehicle_type = 'CAMINHAO_3_4' "
+                "AND axle_count = 2 "
+                "AND pallet_capacity_min = 8 "
+                "AND pallet_capacity_max = 8 "
+                "AND payload_capacity_kg = 3500) OR "
+                "(vehicle_type = 'TOCO' "
+                "AND axle_count = 2 "
+                "AND pallet_capacity_min = 12 "
+                "AND pallet_capacity_max = 12 "
+                "AND payload_capacity_kg = 6500) OR "
+                "(vehicle_type = 'TRUCK' "
+                "AND axle_count = 3 "
+                "AND pallet_capacity_min = 16 "
+                "AND pallet_capacity_max = 20 "
+                "AND payload_capacity_kg = 12500) OR "
+                "(vehicle_type = 'BITRUCK' "
+                "AND axle_count = 4 "
+                "AND pallet_capacity_min = 16 "
+                "AND pallet_capacity_max = 18 "
+                "AND payload_capacity_kg = 17000) OR "
+                "(vehicle_type = 'CARRETA' "
+                "AND axle_count = 5 "
+                "AND pallet_capacity_min = 28 "
+                "AND pallet_capacity_max = 28 "
+                "AND payload_capacity_kg = 26000) OR "
+                "(vehicle_type = 'CARRETA_LS' "
+                "AND axle_count = 6 "
+                "AND pallet_capacity_min = 28 "
+                "AND pallet_capacity_max = 28 "
+                "AND payload_capacity_kg = 30000) OR "
+                "(vehicle_type = 'CARRETA_VANDERLEIA' "
+                "AND axle_count = 6 "
+                "AND pallet_capacity_min = 30 "
+                "AND pallet_capacity_max = 30 "
+                "AND payload_capacity_kg = 35000)"
+            ),
+            name=(
+                "ck_freight_vehicle_records_"
+                "specification"
+            )
+        ),
+    )
+
+    freight_vehicle_record_id: Mapped[int] = mapped_column(
+        BigInteger,
+        Identity(),
+        primary_key=True
+    )
+
+    freight_transport_unit_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "freight_transport_units.freight_transport_unit_id",
+            ondelete="CASCADE"
+        ),
+        nullable=False
+    )
+
+    vehicle_type: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False
+    )
+
+    plate: Mapped[str] = mapped_column(
+        String(7),
+        nullable=False
+    )
+
+    axle_count: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False
+    )
+
+    pallet_capacity_min: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False
+    )
+
+    pallet_capacity_max: Mapped[int] = mapped_column(
+        SmallInteger,
+        nullable=False
+    )
+
+    payload_capacity_kg: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False
+    )
+
+    created_by: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "users.user_id",
+            ondelete="SET NULL"
+        ),
+        nullable=True
+    )
+
+    transport_unit: Mapped[FreightTransportUnitModel] = relationship(
+        back_populates="vehicle_record"
     )
 
 

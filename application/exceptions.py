@@ -116,3 +116,7 @@ class FreightDriverAssignmentNotFoundError(ApplicationError):
 
 class FreightDriverAssignmentPersistenceError(ApplicationError):
     """Falha ao persistir ou consultar participação de motorista."""
+
+
+class FreightVehicleRecordPersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar veículo operacional do frete."""
