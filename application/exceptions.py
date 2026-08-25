@@ -81,3 +81,15 @@ class FreightNotFoundError(ApplicationError):
 
 class InvalidFreightStateError(ApplicationError):
     """O frete não permite a operação no estado atual."""
+
+
+class InvalidDriverDataError(ApplicationError):
+    """Os dados fornecidos para o motorista são inválidos."""
+
+
+class DriverAlreadyExistsError(ApplicationError):
+    """Já existe motorista com o CPF informado."""
+
+
+class DriverPersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar motorista."""

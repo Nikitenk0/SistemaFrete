@@ -5,6 +5,12 @@ from infrastructure.persistence.sqlalchemy.models.customer import (
     CustomerModel,
     CustomerOperationalLocationModel
 )
+from infrastructure.persistence.sqlalchemy.models.driver import (
+    DriverAddressModel,
+    DriverBankAccountModel,
+    DriverContactModel,
+    DriverModel
+)
 from infrastructure.persistence.sqlalchemy.models.freight import (
     FreightEventModel,
     FreightModel,
@@ -36,6 +42,10 @@ __all__ = (
     "CustomerGroupModel",
     "CustomerModel",
     "CustomerOperationalLocationModel",
+    "DriverAddressModel",
+    "DriverBankAccountModel",
+    "DriverContactModel",
+    "DriverModel",
     "FreightEventModel",
     "FreightModel",
     "FreightTransportUnitModel",

@@ -1,0 +1,609 @@
+"""adiciona cadastro completo de motoristas
+
+Revision ID: b1e6d3a94f20
+Revises: 4c3f7a1d8e92
+Create Date: 2026-08-24 18:25:00.000000
+
+"""
+from typing import Sequence, Union
+
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision: str = "b1e6d3a94f20"
+down_revision: Union[str, Sequence[str], None] = (
+    "4c3f7a1d8e92"
+)
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Upgrade schema."""
+
+    op.create_table(
+        "drivers",
+        sa.Column(
+            "driver_id",
+            sa.BigInteger(),
+            sa.Identity(always=False),
+            nullable=False
+        ),
+        sa.Column(
+            "name",
+            sa.String(length=255),
+            nullable=False
+        ),
+        sa.Column(
+            "cpf",
+            sa.String(length=11),
+            nullable=False
+        ),
+        sa.Column(
+            "rg",
+            sa.String(length=50),
+            nullable=False
+        ),
+        sa.Column(
+            "birth_date",
+            sa.Date(),
+            nullable=False
+        ),
+        sa.Column(
+            "cnh_number",
+            sa.String(length=50),
+            nullable=False
+        ),
+        sa.Column(
+            "cnh_category",
+            sa.String(length=5),
+            nullable=False
+        ),
+        sa.Column(
+            "cnh_expiration_date",
+            sa.Date(),
+            nullable=False
+        ),
+        sa.Column(
+            "status",
+            sa.String(length=20),
+            nullable=False
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False
+        ),
+        sa.Column(
+            "created_by",
+            sa.BigInteger(),
+            nullable=True
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False
+        ),
+        sa.Column(
+            "updated_by",
+            sa.BigInteger(),
+            nullable=True
+        ),
+        sa.CheckConstraint(
+            "status IN ('ACTIVE', 'INACTIVE')",
+            name="ck_drivers_status"
+        ),
+        sa.CheckConstraint(
+            "char_length(cpf) = 11",
+            name="ck_drivers_cpf_length"
+        ),
+        sa.ForeignKeyConstraint(
+            ["created_by"],
+            ["users.user_id"],
+            name=op.f("fk_drivers_created_by_users"),
+            ondelete="SET NULL"
+        ),
+        sa.ForeignKeyConstraint(
+            ["updated_by"],
+            ["users.user_id"],
+            name=op.f("fk_drivers_updated_by_users"),
+            ondelete="SET NULL"
+        ),
+        sa.PrimaryKeyConstraint(
+            "driver_id",
+            name=op.f("pk_drivers")
+        ),
+        sa.UniqueConstraint(
+            "cpf",
+            name=op.f("uq_drivers_cpf")
+        )
+    )
+
+    op.create_index(
+        op.f("ix_drivers_name"),
+        "drivers",
+        ["name"],
+        unique=False
+    )
+    op.create_index(
+        op.f("ix_drivers_cnh_number"),
+        "drivers",
+        ["cnh_number"],
+        unique=False
+    )
+    op.create_index(
+        op.f("ix_drivers_cnh_expiration_date"),
+        "drivers",
+        ["cnh_expiration_date"],
+        unique=False
+    )
+    op.create_index(
+        op.f("ix_drivers_status"),
+        "drivers",
+        ["status"],
+        unique=False
+    )
+    op.create_index(
+        op.f("ix_drivers_created_at"),
+        "drivers",
+        ["created_at"],
+        unique=False
+    )
+
+    op.create_table(
+        "driver_contacts",
+        sa.Column(
+            "driver_contact_id",
+            sa.BigInteger(),
+            sa.Identity(always=False),
+            nullable=False
+        ),
+        sa.Column(
+            "driver_id",
+            sa.BigInteger(),
+            nullable=False
+        ),
+        sa.Column(
+            "phone",
+            sa.String(length=20),
+            nullable=False
+        ),
+        sa.Column(
+            "secondary_phone",
+            sa.String(length=20),
+            nullable=True
+        ),
+        sa.Column(
+            "email",
+            sa.String(length=255),
+            nullable=True
+        ),
+        sa.Column(
+            "is_primary",
+            sa.Boolean(),
+            nullable=False
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False
+        ),
+        sa.Column(
+            "created_by",
+            sa.BigInteger(),
+            nullable=True
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False
+        ),
+        sa.Column(
+            "updated_by",
+            sa.BigInteger(),
+            nullable=True
+        ),
+        sa.ForeignKeyConstraint(
+            ["driver_id"],
+            ["drivers.driver_id"],
+            name=op.f(
+                "fk_driver_contacts_driver_id_drivers"
+            ),
+            ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["created_by"],
+            ["users.user_id"],
+            name=op.f(
+                "fk_driver_contacts_created_by_users"
+            ),
+            ondelete="SET NULL"
+        ),
+        sa.ForeignKeyConstraint(
+            ["updated_by"],
+            ["users.user_id"],
+            name=op.f(
+                "fk_driver_contacts_updated_by_users"
+            ),
+            ondelete="SET NULL"
+        ),
+        sa.PrimaryKeyConstraint(
+            "driver_contact_id",
+            name=op.f("pk_driver_contacts")
+        )
+    )
+
+    op.create_index(
+        op.f("ix_driver_contacts_driver_id"),
+        "driver_contacts",
+        ["driver_id"],
+        unique=False
+    )
+    op.create_index(
+        "uq_driver_contacts_driver_primary",
+        "driver_contacts",
+        ["driver_id"],
+        unique=True,
+        postgresql_where=sa.text(
+            "is_primary IS TRUE"
+        )
+    )
+
+    op.create_table(
+        "driver_addresses",
+        sa.Column(
+            "driver_address_id",
+            sa.BigInteger(),
+            sa.Identity(always=False),
+            nullable=False
+        ),
+        sa.Column(
+            "driver_id",
+            sa.BigInteger(),
+            nullable=False
+        ),
+        sa.Column(
+            "address_type",
+            sa.String(length=20),
+            nullable=False
+        ),
+        sa.Column(
+            "postal_code",
+            sa.String(length=8),
+            nullable=False
+        ),
+        sa.Column(
+            "street",
+            sa.String(length=255),
+            nullable=False
+        ),
+        sa.Column(
+            "number",
+            sa.String(length=50),
+            nullable=False
+        ),
+        sa.Column(
+            "complement",
+            sa.String(length=255),
+            nullable=True
+        ),
+        sa.Column(
+            "district",
+            sa.String(length=255),
+            nullable=False
+        ),
+        sa.Column(
+            "city",
+            sa.String(length=255),
+            nullable=False
+        ),
+        sa.Column(
+            "state",
+            sa.String(length=2),
+            nullable=False
+        ),
+        sa.Column(
+            "is_primary",
+            sa.Boolean(),
+            nullable=False
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False
+        ),
+        sa.Column(
+            "created_by",
+            sa.BigInteger(),
+            nullable=True
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False
+        ),
+        sa.Column(
+            "updated_by",
+            sa.BigInteger(),
+            nullable=True
+        ),
+        sa.CheckConstraint(
+            "address_type IN ('RESIDENTIAL', 'OTHER')",
+            name="ck_driver_addresses_address_type"
+        ),
+        sa.CheckConstraint(
+            "char_length(postal_code) = 8",
+            name=(
+                "ck_driver_addresses_"
+                "postal_code_length"
+            )
+        ),
+        sa.ForeignKeyConstraint(
+            ["driver_id"],
+            ["drivers.driver_id"],
+            name=op.f(
+                "fk_driver_addresses_driver_id_drivers"
+            ),
+            ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["created_by"],
+            ["users.user_id"],
+            name=op.f(
+                "fk_driver_addresses_created_by_users"
+            ),
+            ondelete="SET NULL"
+        ),
+        sa.ForeignKeyConstraint(
+            ["updated_by"],
+            ["users.user_id"],
+            name=op.f(
+                "fk_driver_addresses_updated_by_users"
+            ),
+            ondelete="SET NULL"
+        ),
+        sa.PrimaryKeyConstraint(
+            "driver_address_id",
+            name=op.f("pk_driver_addresses")
+        )
+    )
+
+    op.create_index(
+        op.f("ix_driver_addresses_driver_id"),
+        "driver_addresses",
+        ["driver_id"],
+        unique=False
+    )
+    op.create_index(
+        "uq_driver_addresses_driver_primary",
+        "driver_addresses",
+        ["driver_id"],
+        unique=True,
+        postgresql_where=sa.text(
+            "is_primary IS TRUE"
+        )
+    )
+
+    op.create_table(
+        "driver_bank_accounts",
+        sa.Column(
+            "driver_bank_account_id",
+            sa.BigInteger(),
+            sa.Identity(always=False),
+            nullable=False
+        ),
+        sa.Column(
+            "driver_id",
+            sa.BigInteger(),
+            nullable=False
+        ),
+        sa.Column(
+            "bank_code",
+            sa.String(length=3),
+            nullable=False
+        ),
+        sa.Column(
+            "agency",
+            sa.String(length=30),
+            nullable=False
+        ),
+        sa.Column(
+            "account",
+            sa.String(length=50),
+            nullable=False
+        ),
+        sa.Column(
+            "account_digit",
+            sa.String(length=10),
+            nullable=True
+        ),
+        sa.Column(
+            "account_type",
+            sa.String(length=20),
+            nullable=False
+        ),
+        sa.Column(
+            "pix_key_type",
+            sa.String(length=20),
+            nullable=True
+        ),
+        sa.Column(
+            "pix_key",
+            sa.String(length=255),
+            nullable=True
+        ),
+        sa.Column(
+            "is_primary",
+            sa.Boolean(),
+            nullable=False
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False
+        ),
+        sa.Column(
+            "created_by",
+            sa.BigInteger(),
+            nullable=True
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False
+        ),
+        sa.Column(
+            "updated_by",
+            sa.BigInteger(),
+            nullable=True
+        ),
+        sa.CheckConstraint(
+            "account_type IN "
+            "('CHECKING', 'SAVINGS', 'PAYMENT')",
+            name=(
+                "ck_driver_bank_accounts_"
+                "account_type"
+            )
+        ),
+        sa.CheckConstraint(
+            "pix_key_type IS NULL OR pix_key_type IN "
+            "('CPF', 'EMAIL', 'PHONE', 'RANDOM')",
+            name=(
+                "ck_driver_bank_accounts_"
+                "pix_key_type"
+            )
+        ),
+        sa.CheckConstraint(
+            "(pix_key_type IS NULL AND pix_key IS NULL) OR "
+            "(pix_key_type IS NOT NULL AND pix_key IS NOT NULL)",
+            name=(
+                "ck_driver_bank_accounts_"
+                "pix_pair"
+            )
+        ),
+        sa.CheckConstraint(
+            "char_length(bank_code) = 3",
+            name=(
+                "ck_driver_bank_accounts_"
+                "bank_code_length"
+            )
+        ),
+        sa.ForeignKeyConstraint(
+            ["driver_id"],
+            ["drivers.driver_id"],
+            name=op.f(
+                "fk_driver_bank_accounts_driver_id_drivers"
+            ),
+            ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["created_by"],
+            ["users.user_id"],
+            name=op.f(
+                "fk_driver_bank_accounts_created_by_users"
+            ),
+            ondelete="SET NULL"
+        ),
+        sa.ForeignKeyConstraint(
+            ["updated_by"],
+            ["users.user_id"],
+            name=op.f(
+                "fk_driver_bank_accounts_updated_by_users"
+            ),
+            ondelete="SET NULL"
+        ),
+        sa.PrimaryKeyConstraint(
+            "driver_bank_account_id",
+            name=op.f("pk_driver_bank_accounts")
+        )
+    )
+
+    op.create_index(
+        op.f("ix_driver_bank_accounts_driver_id"),
+        "driver_bank_accounts",
+        ["driver_id"],
+        unique=False
+    )
+    op.create_index(
+        "uq_driver_bank_accounts_driver_primary",
+        "driver_bank_accounts",
+        ["driver_id"],
+        unique=True,
+        postgresql_where=sa.text(
+            "is_primary IS TRUE"
+        )
+    )
+
+
+def downgrade() -> None:
+    """Downgrade schema."""
+
+    op.drop_index(
+        "uq_driver_bank_accounts_driver_primary",
+        table_name="driver_bank_accounts"
+    )
+    op.drop_index(
+        op.f("ix_driver_bank_accounts_driver_id"),
+        table_name="driver_bank_accounts"
+    )
+    op.drop_table(
+        "driver_bank_accounts"
+    )
+
+    op.drop_index(
+        "uq_driver_addresses_driver_primary",
+        table_name="driver_addresses"
+    )
+    op.drop_index(
+        op.f("ix_driver_addresses_driver_id"),
+        table_name="driver_addresses"
+    )
+    op.drop_table(
+        "driver_addresses"
+    )
+
+    op.drop_index(
+        "uq_driver_contacts_driver_primary",
+        table_name="driver_contacts"
+    )
+    op.drop_index(
+        op.f("ix_driver_contacts_driver_id"),
+        table_name="driver_contacts"
+    )
+    op.drop_table(
+        "driver_contacts"
+    )
+
+    op.drop_index(
+        op.f("ix_drivers_created_at"),
+        table_name="drivers"
+    )
+    op.drop_index(
+        op.f("ix_drivers_status"),
+        table_name="drivers"
+    )
+    op.drop_index(
+        op.f("ix_drivers_cnh_expiration_date"),
+        table_name="drivers"
+    )
+    op.drop_index(
+        op.f("ix_drivers_cnh_number"),
+        table_name="drivers"
+    )
+    op.drop_index(
+        op.f("ix_drivers_name"),
+        table_name="drivers"
+    )
+    op.drop_table(
+        "drivers"
+    )
