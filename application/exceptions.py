@@ -120,3 +120,11 @@ class FreightDriverAssignmentPersistenceError(ApplicationError):
 
 class FreightVehicleRecordPersistenceError(ApplicationError):
     """Falha ao persistir ou consultar veículo operacional do frete."""
+
+
+class FreightExpensePersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar despesa realizada do frete."""
+
+
+class FreightExpenseNotFoundError(ApplicationError):
+    """Despesa realizada do frete não encontrada."""

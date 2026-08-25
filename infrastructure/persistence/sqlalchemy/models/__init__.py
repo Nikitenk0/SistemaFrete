@@ -18,6 +18,9 @@ from infrastructure.persistence.sqlalchemy.models.freight import (
     FreightTransportUnitModel,
     FreightVehicleRecordModel
 )
+from infrastructure.persistence.sqlalchemy.models.freight_expense import (
+    FreightExpenseModel
+)
 from infrastructure.persistence.sqlalchemy.models.quote import (
     QuoteAdditionalModel,
     QuoteEventModel,
@@ -50,6 +53,7 @@ __all__ = (
     "DriverModel",
     "FreightDriverAssignmentModel",
     "FreightEventModel",
+    "FreightExpenseModel",
     "FreightModel",
     "FreightTransportUnitModel",
     "FreightVehicleRecordModel",
