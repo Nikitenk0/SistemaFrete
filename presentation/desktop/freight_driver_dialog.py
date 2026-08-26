@@ -226,6 +226,21 @@ class FreightDriverDialog:
             column=2,
         )
 
+        ctk.CTkLabel(
+            bottom,
+            text=(
+                "Cadastros novos ou correções devem ser feitos em "
+                "Cadastros > Motoristas."
+            ),
+            font=("Arial", 11),
+        ).grid(
+            row=1,
+            column=0,
+            columnspan=3,
+            sticky="w",
+            pady=(8, 0),
+        )
+
         self._window.update_idletasks()
         required_width = max(
             700,

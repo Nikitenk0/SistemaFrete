@@ -13,6 +13,12 @@ from application.use_cases.add_freight_vehicle_record import (
 from application.use_cases.calculate_closed_load_quote import (
     CalculateClosedLoadQuote
 )
+from application.use_cases.create_driver import (
+    CreateDriver
+)
+from application.use_cases.get_driver import (
+    GetDriver
+)
 from application.use_cases.generate_quote_pdf import (
     GenerateQuotePdf
 )
@@ -25,11 +31,17 @@ from application.use_cases.get_freight_details import (
 from application.use_cases.list_freights import (
     ListFreights
 )
+from application.use_cases.list_drivers import (
+    ListDrivers
+)
 from application.use_cases.search_available_freight_drivers import (
     SearchAvailableFreightDrivers
 )
 from application.use_cases.start_freight import (
     StartFreight
+)
+from application.use_cases.update_driver import (
+    UpdateDriver
 )
 from config.app import (
     QUALP_EMAIL,
@@ -48,6 +60,12 @@ from infrastructure.pdf.reportlab_quote_pdf_generator import (
 from infrastructure.persistence.sqlalchemy.database import (
     create_database_engine,
     create_session_factory,
+)
+from infrastructure.persistence.sqlalchemy.driver_query_repository import (
+    SqlAlchemyDriverQueryRepository,
+)
+from infrastructure.persistence.sqlalchemy.driver_unit_of_work import (
+    SqlAlchemyDriverUnitOfWorkFactory,
 )
 from infrastructure.persistence.sqlalchemy.freight_driver_assignment_unit_of_work import (
     SqlAlchemyFreightDriverAssignmentUnitOfWorkFactory,
@@ -158,6 +176,24 @@ def _create_search_available_drivers_callback(
     return search_available_drivers
 
 
+
+def _create_list_drivers_callback(
+    session_factory,
+):
+
+    def list_drivers(**filters):
+        with session_factory() as session:
+            repository = SqlAlchemyDriverQueryRepository(
+                session
+            )
+            return ListDrivers(
+                repository
+            ).execute(
+                **filters
+            )
+
+    return list_drivers
+
 def create_application():
 
     ctk.set_appearance_mode("light")
@@ -216,12 +252,26 @@ def create_application():
             session_factory
         )
     )
+    driver_unit_of_work_factory = (
+        SqlAlchemyDriverUnitOfWorkFactory(
+            session_factory
+        )
+    )
     freight_driver_assignment_unit_of_work_factory = (
         SqlAlchemyFreightDriverAssignmentUnitOfWorkFactory(
             session_factory
         )
     )
 
+    create_driver = CreateDriver(
+        driver_unit_of_work_factory
+    )
+    get_driver = GetDriver(
+        driver_unit_of_work_factory
+    )
+    update_driver = UpdateDriver(
+        driver_unit_of_work_factory
+    )
     add_transport_unit = AddFreightTransportUnit(
         freight_unit_of_work_factory
     )
@@ -269,6 +319,20 @@ def create_application():
             _create_search_available_drivers_callback(
                 session_factory
             )
+        ),
+        create_driver_callback=(
+            create_driver.execute
+        ),
+        list_drivers_callback=(
+            _create_list_drivers_callback(
+                session_factory
+            )
+        ),
+        get_driver_callback=(
+            get_driver.execute
+        ),
+        update_driver_callback=(
+            update_driver.execute
         ),
         assign_driver_callback=(
             assign_driver.execute

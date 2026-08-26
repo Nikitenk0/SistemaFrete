@@ -18,6 +18,9 @@ from presentation.desktop.closed_load_quote_view import (
     ClosedLoadQuoteView
 )
 from presentation.desktop.documents_view import DocumentsView
+from presentation.desktop.driver_list_view import (
+    DriverListView
+)
 from presentation.desktop.freight_detail_view import (
     FreightDetailView
 )
@@ -42,6 +45,10 @@ class MainMenu:
         remove_transport_unit_callback,
         add_vehicle_callback,
         search_available_drivers_callback,
+        create_driver_callback,
+        list_drivers_callback,
+        get_driver_callback,
+        update_driver_callback,
         assign_driver_callback,
         start_freight_callback,
     ):
@@ -62,6 +69,10 @@ class MainMenu:
         self.search_available_drivers_callback = (
             search_available_drivers_callback
         )
+        self.create_driver_callback = create_driver_callback
+        self.list_drivers_callback = list_drivers_callback
+        self.get_driver_callback = get_driver_callback
+        self.update_driver_callback = update_driver_callback
         self.assign_driver_callback = assign_driver_callback
         self.start_freight_callback = start_freight_callback
         self.is_dark_mode = False
@@ -153,6 +164,40 @@ class MainMenu:
             padx=10
         )
 
+        self.catalog_button = ctk.CTkButton(
+            self.menu,
+            text="Cadastros",
+            command=self.toggle_catalog_submenu,
+            fg_color=BUTTON_COLOR,
+            text_color="white",
+            font=BUTTON_FONT
+        )
+        self.catalog_button.pack(
+            fill=X,
+            pady=5,
+            padx=10
+        )
+
+        self.catalog_submenu = ctk.CTkFrame(
+            self.master,
+            fg_color=MENU_COLOR,
+            width=220
+        )
+        self.catalog_submenu.pack_propagate(False)
+
+        ctk.CTkButton(
+            self.catalog_submenu,
+            text="1 - Motoristas",
+            command=self.show_drivers,
+            fg_color=BUTTON_COLOR,
+            text_color="white",
+            font=BUTTON_FONT
+        ).pack(
+            fill=X,
+            pady=5,
+            padx=10
+        )
+
         ctk.CTkButton(
             self.menu,
             text="Documentos",
@@ -211,6 +256,23 @@ class MainMenu:
 
             self.is_dark_mode = True
 
+    def _hide_submenus(self):
+
+        self.quote_submenu.place_forget()
+        self.catalog_submenu.place_forget()
+
+    def toggle_catalog_submenu(self):
+
+        self.quote_submenu.place_forget()
+
+        if self.catalog_submenu.winfo_ismapped():
+            self.catalog_submenu.place_forget()
+        else:
+            self.catalog_submenu.place(
+                x=MENU_WIDTH,
+                y=0
+            )
+
     def clear_content(self):
         """Remove todos os componentes da área principal."""
         for widget in self.content.winfo_children():
@@ -229,6 +291,8 @@ class MainMenu:
 
     def toggle_quote_submenu(self):
 
+        self.catalog_submenu.place_forget()
+
         if self.quote_submenu.winfo_ismapped():
 
             self.quote_submenu.place_forget()
@@ -242,7 +306,7 @@ class MainMenu:
 
     def show_closed_load_quote(self):
 
-        self.quote_submenu.place_forget()
+        self._hide_submenus()
 
         self.clear_content()
 
@@ -255,7 +319,7 @@ class MainMenu:
 
     def show_complement(self):
 
-        self.quote_submenu.place_forget()
+        self._hide_submenus()
 
         self.clear_content()
 
@@ -268,7 +332,7 @@ class MainMenu:
 
     def show_freights(self):
 
-        self.quote_submenu.place_forget()
+        self._hide_submenus()
 
         self.clear_content()
 
@@ -290,7 +354,7 @@ class MainMenu:
         freight_id: int,
     ):
 
-        self.quote_submenu.place_forget()
+        self._hide_submenus()
 
         self.clear_content()
 
@@ -323,9 +387,31 @@ class MainMenu:
             )
         )
 
+    def show_drivers(self):
+
+        self._hide_submenus()
+        self.clear_content()
+
+        self.current_driver_list_view = DriverListView(
+            parent=self.content,
+            list_drivers_callback=(
+                self.list_drivers_callback
+            ),
+            get_driver_callback=(
+                self.get_driver_callback
+            ),
+            create_driver_callback=(
+                self.create_driver_callback
+            ),
+            update_driver_callback=(
+                self.update_driver_callback
+            ),
+            navigate_back=self.show_home,
+        )
+
     def show_documents(self):
 
-        self.quote_submenu.place_forget()
+        self._hide_submenus()
 
         self.clear_content()
 
