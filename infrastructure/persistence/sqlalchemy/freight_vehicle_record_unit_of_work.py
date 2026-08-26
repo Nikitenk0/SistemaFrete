@@ -21,6 +21,9 @@ from application.ports.freight_vehicle_record_repository import (
 from application.ports.freight_vehicle_record_unit_of_work import (
     FreightVehicleRecordUnitOfWork
 )
+from application.ports.vehicle_repository import (
+    VehicleRepository
+)
 from infrastructure.persistence.sqlalchemy.freight_repository import (
     SqlAlchemyFreightRepository
 )
@@ -29,6 +32,9 @@ from infrastructure.persistence.sqlalchemy.freight_transport_unit_repository imp
 )
 from infrastructure.persistence.sqlalchemy.freight_vehicle_record_repository import (
     SqlAlchemyFreightVehicleRecordRepository
+)
+from infrastructure.persistence.sqlalchemy.vehicle_repository import (
+    SqlAlchemyVehicleRepository
 )
 
 
@@ -49,6 +55,7 @@ class SqlAlchemyFreightVehicleRecordUnitOfWork(
         self._vehicle_records: (
             FreightVehicleRecordRepository | None
         ) = None
+        self._vehicles: VehicleRepository | None = None
 
     @property
     def freights(
@@ -80,6 +87,16 @@ class SqlAlchemyFreightVehicleRecordUnitOfWork(
             )
         return self._vehicle_records
 
+    @property
+    def vehicles(
+        self
+    ) -> VehicleRepository:
+        if self._vehicles is None:
+            raise RuntimeError(
+                "Unit of Work não iniciado"
+            )
+        return self._vehicles
+
     def __enter__(
         self
     ) -> "SqlAlchemyFreightVehicleRecordUnitOfWork":
@@ -97,6 +114,9 @@ class SqlAlchemyFreightVehicleRecordUnitOfWork(
             SqlAlchemyFreightVehicleRecordRepository(
                 self._session
             )
+        )
+        self._vehicles = SqlAlchemyVehicleRepository(
+            self._session
         )
 
         return self
@@ -120,6 +140,7 @@ class SqlAlchemyFreightVehicleRecordUnitOfWork(
             self._freights = None
             self._transport_units = None
             self._vehicle_records = None
+            self._vehicles = None
 
     def commit(
         self

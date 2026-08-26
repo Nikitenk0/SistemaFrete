@@ -10,6 +10,9 @@ from application.ports.freight_transport_unit_repository import (
 from application.ports.freight_vehicle_record_repository import (
     FreightVehicleRecordRepository
 )
+from application.ports.vehicle_repository import (
+    VehicleRepository
+)
 
 
 class FreightVehicleRecordUnitOfWork(Protocol):
@@ -30,6 +33,12 @@ class FreightVehicleRecordUnitOfWork(Protocol):
     def vehicle_records(
         self
     ) -> FreightVehicleRecordRepository:
+        ...
+
+    @property
+    def vehicles(
+        self
+    ) -> VehicleRepository:
         ...
 
     def commit(

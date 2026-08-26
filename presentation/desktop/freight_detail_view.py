@@ -53,8 +53,12 @@ class FreightDetailView:
         add_transport_unit_callback,
         remove_transport_unit_callback,
         add_vehicle_callback,
+        remove_vehicle_callback,
+        replace_vehicle_callback,
+        search_available_vehicles_callback,
         search_available_drivers_callback,
         assign_driver_callback,
+        replace_driver_callback,
         start_freight_callback,
         navigate_back,
     ):
@@ -70,10 +74,16 @@ class FreightDetailView:
             remove_transport_unit_callback
         )
         self._add_vehicle_callback = add_vehicle_callback
+        self._remove_vehicle_callback = remove_vehicle_callback
+        self._replace_vehicle_callback = replace_vehicle_callback
+        self._search_available_vehicles_callback = (
+            search_available_vehicles_callback
+        )
         self._search_available_drivers_callback = (
             search_available_drivers_callback
         )
         self._assign_driver_callback = assign_driver_callback
+        self._replace_driver_callback = replace_driver_callback
         self._start_freight_callback = start_freight_callback
         self._navigate_back = navigate_back
         self._is_loading = False
@@ -474,7 +484,7 @@ class FreightDetailView:
             if allow_pending_actions:
                 button = ctk.CTkButton(
                     vehicle_row,
-                    text="Registrar veículo",
+                    text="Selecionar veículo",
                     width=125,
                     command=lambda current_unit=unit: (
                         self._add_vehicle(current_unit)
@@ -509,7 +519,45 @@ class FreightDetailView:
             ctk.CTkLabel(
                 card,
                 text=f"Capacidade de pallets: {pallet_text}",
-            ).pack(anchor="w", padx=12, pady=(0, 8))
+            ).pack(anchor="w", padx=12, pady=(0, 5))
+
+            if allow_pending_actions:
+                vehicle_actions = ctk.CTkFrame(
+                    card,
+                    fg_color="transparent",
+                )
+                vehicle_actions.pack(
+                    fill="x",
+                    padx=12,
+                    pady=(0, 8),
+                )
+
+                replace_vehicle_button = ctk.CTkButton(
+                    vehicle_actions,
+                    text="Trocar veículo",
+                    width=115,
+                    command=lambda current_unit=unit: (
+                        self._replace_vehicle(current_unit)
+                    ),
+                )
+                replace_vehicle_button.pack(
+                    side="right",
+                    padx=(8, 0),
+                )
+
+                remove_vehicle_button = ctk.CTkButton(
+                    vehicle_actions,
+                    text="Remover veículo",
+                    width=120,
+                    command=lambda current_unit=unit: (
+                        self._remove_vehicle(current_unit)
+                    ),
+                )
+                remove_vehicle_button.pack(side="right")
+
+                self._operation_buttons.extend(
+                    (replace_vehicle_button, remove_vehicle_button)
+                )
 
         driver_header = ctk.CTkFrame(
             card,
@@ -527,20 +575,31 @@ class FreightDetailView:
             font=("Arial", 12, "bold"),
         ).pack(side="left")
 
-        if (
-            allow_pending_actions
-            and not unit_has_active_driver(unit)
-        ):
-            assign_button = ctk.CTkButton(
-                driver_header,
-                text="Atribuir motorista",
-                width=135,
-                command=lambda current_unit=unit: (
-                    self._assign_driver(current_unit)
-                ),
-            )
-            assign_button.pack(side="right")
-            self._operation_buttons.append(assign_button)
+        if allow_pending_actions:
+            if unit_has_active_driver(unit):
+                replace_driver_button = ctk.CTkButton(
+                    driver_header,
+                    text="Trocar motorista",
+                    width=135,
+                    command=lambda current_unit=unit: (
+                        self._replace_driver(current_unit)
+                    ),
+                )
+                replace_driver_button.pack(side="right")
+                self._operation_buttons.append(
+                    replace_driver_button
+                )
+            else:
+                assign_button = ctk.CTkButton(
+                    driver_header,
+                    text="Atribuir motorista",
+                    width=135,
+                    command=lambda current_unit=unit: (
+                        self._assign_driver(current_unit)
+                    ),
+                )
+                assign_button.pack(side="right")
+                self._operation_buttons.append(assign_button)
 
         if not unit.driver_assignments:
             ctk.CTkLabel(
@@ -651,22 +710,124 @@ class FreightDetailView:
         dialog = FreightVehicleDialog(
             parent=self.parent,
             unit_position=unit.position,
+            search_vehicles_callback=(
+                self._search_available_vehicles_callback
+            ),
         )
 
         if dialog.result is None:
             return
 
-        vehicle_type, plate = dialog.result
+        selected_vehicle = dialog.result
 
         self._run_operation(
             task=lambda: self._add_vehicle_callback(
                 freight_transport_unit_id=(
                     unit.freight_transport_unit_id
                 ),
-                vehicle_type=vehicle_type,
-                plate=plate,
+                vehicle_id=selected_vehicle.vehicle_id,
             ),
-            success_message="Veículo operacional registrado.",
+            success_message=(
+                f"Veículo {selected_vehicle.plate} selecionado "
+                f"para a Unidade {unit.position}."
+            ),
+        )
+
+    def _replace_vehicle(
+        self,
+        unit: FreightTransportUnitDetails,
+    ) -> None:
+        if (
+            self._is_loading
+            or self._is_operation_running
+            or self._current_details is None
+            or not is_pending_setup_available(
+                self._current_details.current_status
+            )
+            or unit.vehicle is None
+        ):
+            return
+
+        dialog = FreightVehicleDialog(
+            parent=self.parent,
+            unit_position=unit.position,
+            search_vehicles_callback=(
+                self._search_available_vehicles_callback
+            ),
+        )
+
+        if dialog.result is None:
+            return
+
+        selected_vehicle = dialog.result
+        current_vehicle = unit.vehicle
+
+        if not messagebox.askyesno(
+            "Trocar veículo",
+            (
+                f"Trocar o veículo {current_vehicle.plate} pelo "
+                f"{selected_vehicle.plate} na Unidade "
+                f"{unit.position}?\n\n"
+                "A troca é permitida somente enquanto o frete "
+                "estiver pendente."
+            ),
+            parent=self.parent,
+        ):
+            return
+
+        self._run_operation(
+            task=lambda: self._replace_vehicle_callback(
+                freight_transport_unit_id=(
+                    unit.freight_transport_unit_id
+                ),
+                vehicle_id=selected_vehicle.vehicle_id,
+            ),
+            success_message=(
+                f"Veículo da Unidade {unit.position} trocado "
+                f"para {selected_vehicle.plate}."
+            ),
+        )
+
+    def _remove_vehicle(
+        self,
+        unit: FreightTransportUnitDetails,
+    ) -> None:
+        if (
+            self._is_loading
+            or self._is_operation_running
+            or self._current_details is None
+            or not is_pending_setup_available(
+                self._current_details.current_status
+            )
+            or unit.vehicle is None
+        ):
+            return
+
+        vehicle = unit.vehicle
+
+        if not messagebox.askyesno(
+            "Remover veículo",
+            (
+                f"Remover o veículo {vehicle.plate} da "
+                f"Unidade {unit.position}?\n\n"
+                "Esta ação remove somente o registro operacional "
+                "deste frete. O veículo continua disponível em "
+                "Cadastros > Veículos."
+            ),
+            parent=self.parent,
+        ):
+            return
+
+        self._run_operation(
+            task=lambda: self._remove_vehicle_callback(
+                freight_transport_unit_id=(
+                    unit.freight_transport_unit_id
+                )
+            ),
+            success_message=(
+                f"Veículo {vehicle.plate} removido da "
+                f"Unidade {unit.position}."
+            ),
         )
 
     def _assign_driver(
@@ -707,6 +868,71 @@ class FreightDetailView:
             success_message=(
                 f"Motorista {selected_driver.name} atribuído "
                 f"à Unidade {unit.position}."
+            ),
+        )
+
+    def _replace_driver(
+        self,
+        unit: FreightTransportUnitDetails,
+    ) -> None:
+        if (
+            self._is_loading
+            or self._is_operation_running
+            or self._current_details is None
+            or not is_pending_setup_available(
+                self._current_details.current_status
+            )
+            or not unit_has_active_driver(unit)
+        ):
+            return
+
+        current_assignment = next(
+            (
+                assignment
+                for assignment in unit.driver_assignments
+                if assignment.is_active
+            ),
+            None,
+        )
+        if current_assignment is None:
+            return
+
+        dialog = FreightDriverDialog(
+            parent=self.parent,
+            unit_position=unit.position,
+            search_drivers_callback=(
+                self._search_available_drivers_callback
+            ),
+        )
+
+        if dialog.result is None:
+            return
+
+        selected_driver = dialog.result
+
+        if not messagebox.askyesno(
+            "Trocar motorista",
+            (
+                f"Trocar o motorista {current_assignment.driver_name} "
+                f"por {selected_driver.name} na Unidade "
+                f"{unit.position}?\n\n"
+                "A troca é permitida somente enquanto o frete "
+                "estiver pendente."
+            ),
+            parent=self.parent,
+        ):
+            return
+
+        self._run_operation(
+            task=lambda: self._replace_driver_callback(
+                freight_transport_unit_id=(
+                    unit.freight_transport_unit_id
+                ),
+                driver_id=selected_driver.driver_id,
+            ),
+            success_message=(
+                f"Motorista da Unidade {unit.position} trocado "
+                f"para {selected_driver.name}."
             ),
         )
 

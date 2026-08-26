@@ -97,6 +97,7 @@ class FreightVehicleRecord:
     payload_capacity_kg: int
 
     freight_vehicle_record_id: int | None = None
+    vehicle_id: int | None = None
 
     created_at: datetime | None = None
     created_by: int | None = None
@@ -152,6 +153,14 @@ class FreightVehicleRecord:
         ):
             raise ValueError(
                 "freight_vehicle_record_id inválido"
+            )
+
+        if (
+            self.vehicle_id is not None
+            and self.vehicle_id < 1
+        ):
+            raise ValueError(
+                "vehicle_id inválido"
             )
 
         if (

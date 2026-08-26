@@ -30,3 +30,17 @@ class FreightVehicleRecordRepository(Protocol):
         freight_id: int
     ) -> tuple[FreightVehicleRecord, ...]:
         ...
+
+    def delete_by_transport_unit_id(
+        self,
+        freight_transport_unit_id: int
+    ) -> None:
+        ...
+
+    def get_active_by_master_vehicle(
+        self,
+        vehicle_id: int,
+        plate: str,
+        exclude_transport_unit_id: int | None = None
+    ) -> FreightVehicleRecord | None:
+        ...

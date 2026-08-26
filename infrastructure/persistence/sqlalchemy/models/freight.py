@@ -423,6 +423,15 @@ class FreightVehicleRecordModel(Base):
         nullable=False
     )
 
+    vehicle_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "vehicles.vehicle_id",
+            ondelete="RESTRICT"
+        ),
+        nullable=True,
+        index=True
+    )
+
     vehicle_type: Mapped[str] = mapped_column(
         String(30),
         nullable=False

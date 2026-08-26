@@ -54,3 +54,9 @@ class FreightDriverAssignmentRepository(Protocol):
         freight_id: int
     ) -> tuple[FreightDriverAssignment, ...]:
         ...
+
+    def delete_by_id(
+        self,
+        freight_driver_assignment_id: int
+    ) -> None:
+        ...

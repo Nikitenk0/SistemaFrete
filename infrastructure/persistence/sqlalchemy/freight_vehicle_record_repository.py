@@ -1,4 +1,9 @@
-from sqlalchemy import select
+from sqlalchemy import (
+    and_,
+    delete,
+    or_,
+    select
+)
 from sqlalchemy.exc import (
     IntegrityError,
     SQLAlchemyError
@@ -17,6 +22,7 @@ from domain.models.freight_vehicle_record import (
     FreightVehicleType
 )
 from infrastructure.persistence.sqlalchemy.models import (
+    FreightModel,
     FreightTransportUnitModel,
     FreightVehicleRecordModel
 )
@@ -137,6 +143,77 @@ class SqlAlchemyFreightVehicleRecordRepository(
             for model in models
         )
 
+    def delete_by_transport_unit_id(
+        self,
+        freight_transport_unit_id: int
+    ) -> None:
+
+        try:
+            result = self._session.execute(
+                delete(
+                    FreightVehicleRecordModel
+                ).where(
+                    FreightVehicleRecordModel
+                    .freight_transport_unit_id
+                    == freight_transport_unit_id
+                )
+            )
+
+            if result.rowcount == 0:
+                raise FreightVehicleRecordPersistenceError(
+                    "Veículo operacional não encontrado durante remoção"
+                )
+
+            self._session.flush()
+
+        except FreightVehicleRecordPersistenceError:
+            raise
+
+        except SQLAlchemyError as error:
+            raise FreightVehicleRecordPersistenceError(
+                "Não foi possível remover o veículo operacional"
+            ) from error
+
+    def get_active_by_master_vehicle(
+        self,
+        vehicle_id: int,
+        plate: str,
+        exclude_transport_unit_id: int | None = None
+    ) -> FreightVehicleRecord | None:
+
+        identity_condition = or_(
+            FreightVehicleRecordModel.vehicle_id == vehicle_id,
+            and_(
+                FreightVehicleRecordModel.vehicle_id.is_(None),
+                FreightVehicleRecordModel.plate == plate
+            )
+        )
+
+        statement = (
+            select(FreightVehicleRecordModel)
+            .join(
+                FreightTransportUnitModel,
+                FreightTransportUnitModel.freight_transport_unit_id
+                == FreightVehicleRecordModel.freight_transport_unit_id
+            )
+            .join(
+                FreightModel,
+                FreightModel.freight_id == FreightTransportUnitModel.freight_id
+            )
+            .where(
+                identity_condition,
+                FreightModel.current_status.in_(("PENDING", "IN_PROGRESS"))
+            )
+        )
+
+        if exclude_transport_unit_id is not None:
+            statement = statement.where(
+                FreightVehicleRecordModel.freight_transport_unit_id
+                != exclude_transport_unit_id
+            )
+
+        return self._get_one(statement)
+
     def _get_one(
         self,
         statement
@@ -168,6 +245,7 @@ class SqlAlchemyFreightVehicleRecordRepository(
             freight_transport_unit_id=(
                 vehicle_record.freight_transport_unit_id
             ),
+            vehicle_id=vehicle_record.vehicle_id,
             vehicle_type=vehicle_record.vehicle_type.value,
             plate=vehicle_record.plate,
             axle_count=vehicle_record.axle_count,
@@ -200,6 +278,7 @@ class SqlAlchemyFreightVehicleRecordRepository(
             freight_transport_unit_id=(
                 model.freight_transport_unit_id
             ),
+            vehicle_id=model.vehicle_id,
             vehicle_type=FreightVehicleType(
                 model.vehicle_type
             ),

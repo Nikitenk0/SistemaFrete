@@ -47,6 +47,9 @@ class MainMenu:
         add_transport_unit_callback,
         remove_transport_unit_callback,
         add_vehicle_callback,
+        remove_vehicle_callback,
+        replace_vehicle_callback,
+        search_available_vehicles_callback,
         search_available_drivers_callback,
         create_driver_callback,
         list_drivers_callback,
@@ -57,6 +60,7 @@ class MainMenu:
         get_vehicle_callback,
         update_vehicle_callback,
         assign_driver_callback,
+        replace_driver_callback,
         start_freight_callback,
     ):
         self.master = master
@@ -73,6 +77,11 @@ class MainMenu:
             remove_transport_unit_callback
         )
         self.add_vehicle_callback = add_vehicle_callback
+        self.remove_vehicle_callback = remove_vehicle_callback
+        self.replace_vehicle_callback = replace_vehicle_callback
+        self.search_available_vehicles_callback = (
+            search_available_vehicles_callback
+        )
         self.search_available_drivers_callback = (
             search_available_drivers_callback
         )
@@ -85,6 +94,7 @@ class MainMenu:
         self.get_vehicle_callback = get_vehicle_callback
         self.update_vehicle_callback = update_vehicle_callback
         self.assign_driver_callback = assign_driver_callback
+        self.replace_driver_callback = replace_driver_callback
         self.start_freight_callback = start_freight_callback
         self.is_dark_mode = False
 
@@ -398,11 +408,23 @@ class MainMenu:
                 add_vehicle_callback=(
                     self.add_vehicle_callback
                 ),
+                remove_vehicle_callback=(
+                    self.remove_vehicle_callback
+                ),
+                replace_vehicle_callback=(
+                    self.replace_vehicle_callback
+                ),
+                search_available_vehicles_callback=(
+                    self.search_available_vehicles_callback
+                ),
                 search_available_drivers_callback=(
                     self.search_available_drivers_callback
                 ),
                 assign_driver_callback=(
                     self.assign_driver_callback
+                ),
+                replace_driver_callback=(
+                    self.replace_driver_callback
                 ),
                 start_freight_callback=(
                     self.start_freight_callback

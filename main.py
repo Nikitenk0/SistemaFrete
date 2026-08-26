@@ -31,6 +31,9 @@ from application.use_cases.generate_quote_pdf import (
 from application.use_cases.remove_freight_transport_unit import (
     RemoveFreightTransportUnit
 )
+from application.use_cases.remove_freight_vehicle_record import (
+    RemoveFreightVehicleRecord
+)
 from application.use_cases.get_freight_details import (
     GetFreightDetails
 )
@@ -43,11 +46,20 @@ from application.use_cases.list_drivers import (
 from application.use_cases.search_available_freight_drivers import (
     SearchAvailableFreightDrivers
 )
+from application.use_cases.search_available_freight_vehicles import (
+    SearchAvailableFreightVehicles
+)
 from application.use_cases.search_vehicles import (
     SearchVehicles
 )
 from application.use_cases.start_freight import (
     StartFreight
+)
+from application.use_cases.replace_pending_freight_driver import (
+    ReplacePendingFreightDriver
+)
+from application.use_cases.replace_pending_freight_vehicle import (
+    ReplacePendingFreightVehicle
 )
 from application.use_cases.update_driver import (
     UpdateDriver
@@ -93,6 +105,9 @@ from infrastructure.persistence.sqlalchemy.freight_unit_of_work import (
 )
 from infrastructure.persistence.sqlalchemy.freight_vehicle_record_unit_of_work import (
     SqlAlchemyFreightVehicleRecordUnitOfWorkFactory,
+)
+from infrastructure.persistence.sqlalchemy.freight_vehicle_selection_repository import (
+    SqlAlchemyFreightVehicleSelectionRepository,
 )
 from infrastructure.persistence.sqlalchemy.vehicle_unit_of_work import (
     SqlAlchemyVehicleUnitOfWorkFactory,
@@ -189,6 +204,28 @@ def _create_search_available_drivers_callback(
             )
 
     return search_available_drivers
+
+
+def _create_search_available_vehicles_callback(
+    session_factory,
+):
+
+    def search_available_vehicles(
+        query: str = "",
+        limit: int = 200,
+    ):
+        with session_factory() as session:
+            repository = SqlAlchemyFreightVehicleSelectionRepository(
+                session
+            )
+            return SearchAvailableFreightVehicles(
+                repository
+            ).execute(
+                query=query,
+                limit=limit,
+            )
+
+    return search_available_vehicles
 
 
 def _create_list_drivers_callback(
@@ -313,7 +350,16 @@ def create_application():
     add_vehicle = AddFreightVehicleRecord(
         freight_vehicle_unit_of_work_factory
     )
+    remove_vehicle = RemoveFreightVehicleRecord(
+        freight_vehicle_unit_of_work_factory
+    )
+    replace_vehicle = ReplacePendingFreightVehicle(
+        freight_vehicle_unit_of_work_factory
+    )
     assign_driver = AssignDriverToFreightTransportUnit(
+        freight_driver_assignment_unit_of_work_factory
+    )
+    replace_driver = ReplacePendingFreightDriver(
         freight_driver_assignment_unit_of_work_factory
     )
     start_freight = StartFreight(
@@ -346,6 +392,17 @@ def create_application():
         ),
         add_vehicle_callback=(
             add_vehicle.execute
+        ),
+        remove_vehicle_callback=(
+            remove_vehicle.execute
+        ),
+        replace_vehicle_callback=(
+            replace_vehicle.execute
+        ),
+        search_available_vehicles_callback=(
+            _create_search_available_vehicles_callback(
+                session_factory
+            )
         ),
         search_available_drivers_callback=(
             _create_search_available_drivers_callback(
@@ -380,6 +437,9 @@ def create_application():
         ),
         assign_driver_callback=(
             assign_driver.execute
+        ),
+        replace_driver_callback=(
+            replace_driver.execute
         ),
         start_freight_callback=(
             start_freight.execute

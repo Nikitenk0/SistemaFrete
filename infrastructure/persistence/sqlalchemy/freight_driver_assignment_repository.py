@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import (
     IntegrityError,
     SQLAlchemyError
@@ -298,6 +298,33 @@ class SqlAlchemyFreightDriverAssignmentRepository(
             )
             for model in models
         )
+
+    def delete_by_id(
+        self,
+        freight_driver_assignment_id: int
+    ) -> None:
+
+        try:
+            result = self._session.execute(
+                delete(FreightDriverAssignmentModel).where(
+                    FreightDriverAssignmentModel.freight_driver_assignment_id
+                    == freight_driver_assignment_id
+                )
+            )
+
+            if result.rowcount == 0:
+                raise FreightDriverAssignmentNotFoundError(
+                    "Participação de motorista não encontrada"
+                )
+
+            self._session.flush()
+
+        except FreightDriverAssignmentNotFoundError:
+            raise
+        except SQLAlchemyError as error:
+            raise FreightDriverAssignmentPersistenceError(
+                "Não foi possível remover a atribuição planejada do motorista"
+            ) from error
 
     def _get_one(
         self,
