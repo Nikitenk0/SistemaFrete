@@ -30,6 +30,9 @@ from presentation.desktop.freight_list_view import (
 from presentation.desktop.tela_orcamento_complemento import (
     TelaOrcamentoComplemento
 )
+from presentation.desktop.vehicle_list_view import (
+    VehicleListView
+)
 
 
 class MainMenu:
@@ -49,6 +52,10 @@ class MainMenu:
         list_drivers_callback,
         get_driver_callback,
         update_driver_callback,
+        create_vehicle_callback,
+        search_vehicles_callback,
+        get_vehicle_callback,
+        update_vehicle_callback,
         assign_driver_callback,
         start_freight_callback,
     ):
@@ -73,6 +80,10 @@ class MainMenu:
         self.list_drivers_callback = list_drivers_callback
         self.get_driver_callback = get_driver_callback
         self.update_driver_callback = update_driver_callback
+        self.create_vehicle_callback = create_vehicle_callback
+        self.search_vehicles_callback = search_vehicles_callback
+        self.get_vehicle_callback = get_vehicle_callback
+        self.update_vehicle_callback = update_vehicle_callback
         self.assign_driver_callback = assign_driver_callback
         self.start_freight_callback = start_freight_callback
         self.is_dark_mode = False
@@ -189,6 +200,19 @@ class MainMenu:
             self.catalog_submenu,
             text="1 - Motoristas",
             command=self.show_drivers,
+            fg_color=BUTTON_COLOR,
+            text_color="white",
+            font=BUTTON_FONT
+        ).pack(
+            fill=X,
+            pady=5,
+            padx=10
+        )
+
+        ctk.CTkButton(
+            self.catalog_submenu,
+            text="2 - Veículos",
+            command=self.show_vehicles,
             fg_color=BUTTON_COLOR,
             text_color="white",
             font=BUTTON_FONT
@@ -405,6 +429,28 @@ class MainMenu:
             ),
             update_driver_callback=(
                 self.update_driver_callback
+            ),
+            navigate_back=self.show_home,
+        )
+
+    def show_vehicles(self):
+
+        self._hide_submenus()
+        self.clear_content()
+
+        self.current_vehicle_list_view = VehicleListView(
+            parent=self.content,
+            search_vehicles_callback=(
+                self.search_vehicles_callback
+            ),
+            get_vehicle_callback=(
+                self.get_vehicle_callback
+            ),
+            create_vehicle_callback=(
+                self.create_vehicle_callback
+            ),
+            update_vehicle_callback=(
+                self.update_vehicle_callback
             ),
             navigate_back=self.show_home,
         )

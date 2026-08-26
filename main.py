@@ -16,8 +16,14 @@ from application.use_cases.calculate_closed_load_quote import (
 from application.use_cases.create_driver import (
     CreateDriver
 )
+from application.use_cases.create_vehicle import (
+    CreateVehicle
+)
 from application.use_cases.get_driver import (
     GetDriver
+)
+from application.use_cases.get_vehicle import (
+    GetVehicle
 )
 from application.use_cases.generate_quote_pdf import (
     GenerateQuotePdf
@@ -37,11 +43,17 @@ from application.use_cases.list_drivers import (
 from application.use_cases.search_available_freight_drivers import (
     SearchAvailableFreightDrivers
 )
+from application.use_cases.search_vehicles import (
+    SearchVehicles
+)
 from application.use_cases.start_freight import (
     StartFreight
 )
 from application.use_cases.update_driver import (
     UpdateDriver
+)
+from application.use_cases.update_vehicle import (
+    UpdateVehicle
 )
 from config.app import (
     QUALP_EMAIL,
@@ -81,6 +93,9 @@ from infrastructure.persistence.sqlalchemy.freight_unit_of_work import (
 )
 from infrastructure.persistence.sqlalchemy.freight_vehicle_record_unit_of_work import (
     SqlAlchemyFreightVehicleRecordUnitOfWorkFactory,
+)
+from infrastructure.persistence.sqlalchemy.vehicle_unit_of_work import (
+    SqlAlchemyVehicleUnitOfWorkFactory,
 )
 from infrastructure.qualp.qualp_route_searcher import (
     QualPRouteSearcher
@@ -176,7 +191,6 @@ def _create_search_available_drivers_callback(
     return search_available_drivers
 
 
-
 def _create_list_drivers_callback(
     session_factory,
 ):
@@ -193,6 +207,7 @@ def _create_list_drivers_callback(
             )
 
     return list_drivers
+
 
 def create_application():
 
@@ -257,6 +272,11 @@ def create_application():
             session_factory
         )
     )
+    vehicle_unit_of_work_factory = (
+        SqlAlchemyVehicleUnitOfWorkFactory(
+            session_factory
+        )
+    )
     freight_driver_assignment_unit_of_work_factory = (
         SqlAlchemyFreightDriverAssignmentUnitOfWorkFactory(
             session_factory
@@ -271,6 +291,18 @@ def create_application():
     )
     update_driver = UpdateDriver(
         driver_unit_of_work_factory
+    )
+    create_vehicle = CreateVehicle(
+        vehicle_unit_of_work_factory
+    )
+    get_vehicle = GetVehicle(
+        vehicle_unit_of_work_factory
+    )
+    search_vehicles = SearchVehicles(
+        vehicle_unit_of_work_factory
+    )
+    update_vehicle = UpdateVehicle(
+        vehicle_unit_of_work_factory
     )
     add_transport_unit = AddFreightTransportUnit(
         freight_unit_of_work_factory
@@ -333,6 +365,18 @@ def create_application():
         ),
         update_driver_callback=(
             update_driver.execute
+        ),
+        create_vehicle_callback=(
+            create_vehicle.execute
+        ),
+        search_vehicles_callback=(
+            search_vehicles.execute
+        ),
+        get_vehicle_callback=(
+            get_vehicle.execute
+        ),
+        update_vehicle_callback=(
+            update_vehicle.execute
         ),
         assign_driver_callback=(
             assign_driver.execute
