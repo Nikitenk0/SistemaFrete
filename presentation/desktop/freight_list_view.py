@@ -23,11 +23,15 @@ class FreightListView:
         self,
         parent,
         list_freights_callback,
+        open_freight_callback,
         navigate_back,
     ):
         self.parent = parent
         self._list_freights_callback = (
             list_freights_callback
+        )
+        self._open_freight_callback = (
+            open_freight_callback
         )
         self._navigate_back = navigate_back
         self._is_loading = False
@@ -232,6 +236,18 @@ class FreightListView:
             padx=(0, 8),
         )
 
+        self.open_button = ctk.CTkButton(
+            action_frame,
+            text="Abrir frete",
+            width=110,
+            state="disabled",
+            command=self.open_selected_freight,
+        )
+        self.open_button.pack(
+            side="left",
+            padx=(0, 8),
+        )
+
         ctk.CTkButton(
             action_frame,
             text="← Voltar",
@@ -352,6 +368,15 @@ class FreightListView:
             xscrollcommand=(
                 horizontal_scrollbar.set
             ),
+        )
+
+        self.tree.bind(
+            "<<TreeviewSelect>>",
+            self._on_tree_selection,
+        )
+        self.tree.bind(
+            "<Double-1>",
+            self._on_tree_double_click,
         )
 
         self.tree.grid(
@@ -487,6 +512,7 @@ class FreightListView:
             self.tree.insert(
                 "",
                 "end",
+                iid=str(item.freight_id),
                 values=(
                     item.freight_id,
                     item.customer_name,
@@ -510,6 +536,43 @@ class FreightListView:
                 ),
             )
 
+    def open_selected_freight(self) -> None:
+        if self._is_loading:
+            return
+
+        selection = self.tree.selection()
+        if not selection:
+            return
+
+        try:
+            freight_id = int(selection[0])
+        except (TypeError, ValueError):
+            messagebox.showerror(
+                "Erro",
+                "Não foi possível identificar o frete selecionado.",
+            )
+            return
+
+        self._open_freight_callback(
+            freight_id
+        )
+
+    def _on_tree_selection(self, _event=None) -> None:
+        if self._is_loading:
+            self.open_button.configure(state="disabled")
+            return
+
+        self.open_button.configure(
+            state=(
+                "normal"
+                if self.tree.selection()
+                else "disabled"
+            )
+        )
+
+    def _on_tree_double_click(self, _event=None) -> None:
+        self.open_selected_freight()
+
     def _set_loading(
         self,
         value: bool,
@@ -531,6 +594,13 @@ class FreightListView:
             state=(
                 "disabled"
                 if value
+                else "normal"
+            )
+        )
+        self.open_button.configure(
+            state=(
+                "disabled"
+                if value or not self.tree.selection()
                 else "normal"
             )
         )

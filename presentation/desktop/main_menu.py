@@ -18,6 +18,9 @@ from presentation.desktop.closed_load_quote_view import (
     ClosedLoadQuoteView
 )
 from presentation.desktop.documents_view import DocumentsView
+from presentation.desktop.freight_detail_view import (
+    FreightDetailView
+)
 from presentation.desktop.freight_list_view import (
     FreightListView
 )
@@ -34,11 +37,33 @@ class MainMenu:
         calculate_quote_callback,
         generate_pdf_callback,
         list_freights_callback,
+        get_freight_details_callback,
+        add_transport_unit_callback,
+        remove_transport_unit_callback,
+        add_vehicle_callback,
+        search_available_drivers_callback,
+        assign_driver_callback,
+        start_freight_callback,
     ):
         self.master = master
         self.calculate_quote_callback = calculate_quote_callback
         self.generate_pdf_callback = generate_pdf_callback
         self.list_freights_callback = list_freights_callback
+        self.get_freight_details_callback = (
+            get_freight_details_callback
+        )
+        self.add_transport_unit_callback = (
+            add_transport_unit_callback
+        )
+        self.remove_transport_unit_callback = (
+            remove_transport_unit_callback
+        )
+        self.add_vehicle_callback = add_vehicle_callback
+        self.search_available_drivers_callback = (
+            search_available_drivers_callback
+        )
+        self.assign_driver_callback = assign_driver_callback
+        self.start_freight_callback = start_freight_callback
         self.is_dark_mode = False
 
         self.master.title("Sistema")
@@ -253,7 +278,48 @@ class MainMenu:
                 list_freights_callback=(
                     self.list_freights_callback
                 ),
+                open_freight_callback=(
+                    self.show_freight_details
+                ),
                 navigate_back=self.show_home,
+            )
+        )
+
+    def show_freight_details(
+        self,
+        freight_id: int,
+    ):
+
+        self.quote_submenu.place_forget()
+
+        self.clear_content()
+
+        self.current_freight_detail_view = (
+            FreightDetailView(
+                parent=self.content,
+                freight_id=freight_id,
+                get_freight_details_callback=(
+                    self.get_freight_details_callback
+                ),
+                add_transport_unit_callback=(
+                    self.add_transport_unit_callback
+                ),
+                remove_transport_unit_callback=(
+                    self.remove_transport_unit_callback
+                ),
+                add_vehicle_callback=(
+                    self.add_vehicle_callback
+                ),
+                search_available_drivers_callback=(
+                    self.search_available_drivers_callback
+                ),
+                assign_driver_callback=(
+                    self.assign_driver_callback
+                ),
+                start_freight_callback=(
+                    self.start_freight_callback
+                ),
+                navigate_back=self.show_freights,
             )
         )
 

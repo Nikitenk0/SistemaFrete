@@ -30,3 +30,9 @@ class FreightTransportUnitRepository(Protocol):
         freight_id: int
     ) -> int:
         ...
+
+    def delete_by_id(
+        self,
+        freight_transport_unit_id: int
+    ) -> None:
+        ...

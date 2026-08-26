@@ -1,3 +1,4 @@
+from collections import defaultdict
 from decimal import Decimal
 
 from sqlalchemy import and_, func, select
@@ -6,18 +7,33 @@ from sqlalchemy.orm import Session, aliased
 
 from application.dtos.freight_query import (
     FreightDetails,
+    FreightDriverAssignmentDetails,
+    FreightEventDetails,
+    FreightExpenseDetails,
+    FreightFinancialDetails,
     FreightListItem,
     FreightQueryFilters,
+    FreightTransportUnitDetails,
+    FreightVehicleDetails,
 )
 from application.exceptions import FreightPersistenceError
 from application.ports.freight_query_repository import (
     FreightQueryRepository,
 )
 from domain.models.freight import FreightStatus
+from domain.models.freight_event import FreightEventType
+from domain.models.freight_expense import FreightExpenseType
+from domain.models.freight_vehicle_record import FreightVehicleType
 from domain.models.quote import QuoteStatus, QuoteType
 from infrastructure.persistence.sqlalchemy.models import (
+    DriverModel,
+    FreightDriverAssignmentModel,
+    FreightEventModel,
+    FreightExpenseModel,
     FreightFinancialResultModel,
     FreightModel,
+    FreightTransportUnitModel,
+    FreightVehicleRecordModel,
     QuoteModel,
     QuoteVersionModel,
 )
@@ -90,25 +106,471 @@ class SqlAlchemyFreightQueryRepository(
         freight_id: int,
     ) -> FreightDetails | None:
 
-        statement = self._base_statement().where(
-            FreightModel.freight_id == freight_id
-        )
-
         try:
             row = (
-                self._session.execute(statement)
+                self._session.execute(
+                    self._base_statement().where(
+                        FreightModel.freight_id == freight_id
+                    )
+                )
                 .mappings()
                 .one_or_none()
             )
+
+            if row is None:
+                return None
+
+            transport_units = self._load_transport_units(
+                freight_id
+            )
+            expenses = self._load_expenses(
+                freight_id
+            )
+            events = self._load_events(
+                freight_id
+            )
+            financial_result = self._load_financial_result(
+                freight_id
+            )
+
         except SQLAlchemyError as error:
             raise FreightPersistenceError(
                 "Não foi possível consultar os detalhes do frete"
             ) from error
 
+        return self._to_details(
+            row,
+            transport_units=transport_units,
+            expenses=expenses,
+            events=events,
+            financial_result=financial_result,
+        )
+
+    def _load_transport_units(
+        self,
+        freight_id: int,
+    ) -> tuple[FreightTransportUnitDetails, ...]:
+
+        unit_rows = (
+            self._session.execute(
+                select(
+                    FreightTransportUnitModel
+                    .freight_transport_unit_id.label(
+                        "freight_transport_unit_id"
+                    ),
+                    FreightTransportUnitModel.position.label(
+                        "position"
+                    ),
+                    FreightVehicleRecordModel
+                    .freight_vehicle_record_id.label(
+                        "freight_vehicle_record_id"
+                    ),
+                    FreightVehicleRecordModel.vehicle_type.label(
+                        "vehicle_type"
+                    ),
+                    FreightVehicleRecordModel.plate.label(
+                        "plate"
+                    ),
+                    FreightVehicleRecordModel.axle_count.label(
+                        "axle_count"
+                    ),
+                    FreightVehicleRecordModel
+                    .pallet_capacity_min.label(
+                        "pallet_capacity_min"
+                    ),
+                    FreightVehicleRecordModel
+                    .pallet_capacity_max.label(
+                        "pallet_capacity_max"
+                    ),
+                    FreightVehicleRecordModel
+                    .payload_capacity_kg.label(
+                        "payload_capacity_kg"
+                    ),
+                )
+                .select_from(FreightTransportUnitModel)
+                .outerjoin(
+                    FreightVehicleRecordModel,
+                    FreightVehicleRecordModel
+                    .freight_transport_unit_id
+                    == FreightTransportUnitModel
+                    .freight_transport_unit_id,
+                )
+                .where(
+                    FreightTransportUnitModel.freight_id
+                    == freight_id
+                )
+                .order_by(
+                    FreightTransportUnitModel.position,
+                    FreightTransportUnitModel
+                    .freight_transport_unit_id,
+                )
+            )
+            .mappings()
+            .all()
+        )
+
+        assignment_rows = (
+            self._session.execute(
+                select(
+                    FreightDriverAssignmentModel
+                    .freight_driver_assignment_id.label(
+                        "freight_driver_assignment_id"
+                    ),
+                    FreightDriverAssignmentModel
+                    .freight_transport_unit_id.label(
+                        "freight_transport_unit_id"
+                    ),
+                    FreightDriverAssignmentModel.driver_id.label(
+                        "driver_id"
+                    ),
+                    DriverModel.name.label(
+                        "driver_name"
+                    ),
+                    FreightDriverAssignmentModel.started_at.label(
+                        "started_at"
+                    ),
+                    FreightDriverAssignmentModel.ended_at.label(
+                        "ended_at"
+                    ),
+                    FreightDriverAssignmentModel
+                    .actual_driver_amount.label(
+                        "actual_driver_amount"
+                    ),
+                )
+                .select_from(FreightDriverAssignmentModel)
+                .join(
+                    FreightTransportUnitModel,
+                    FreightTransportUnitModel
+                    .freight_transport_unit_id
+                    == FreightDriverAssignmentModel
+                    .freight_transport_unit_id,
+                )
+                .join(
+                    DriverModel,
+                    DriverModel.driver_id
+                    == FreightDriverAssignmentModel.driver_id,
+                )
+                .where(
+                    FreightTransportUnitModel.freight_id
+                    == freight_id
+                )
+                .order_by(
+                    FreightTransportUnitModel.position,
+                    FreightDriverAssignmentModel.started_at,
+                    FreightDriverAssignmentModel
+                    .freight_driver_assignment_id,
+                )
+            )
+            .mappings()
+            .all()
+        )
+
+        assignments_by_unit: dict[
+            int,
+            list[FreightDriverAssignmentDetails]
+        ] = defaultdict(list)
+
+        for assignment_row in assignment_rows:
+            assignments_by_unit[
+                assignment_row["freight_transport_unit_id"]
+            ].append(
+                FreightDriverAssignmentDetails(
+                    freight_driver_assignment_id=(
+                        assignment_row[
+                            "freight_driver_assignment_id"
+                        ]
+                    ),
+                    driver_id=assignment_row["driver_id"],
+                    driver_name=self._required_text(
+                        assignment_row["driver_name"],
+                        "nome do motorista",
+                    ),
+                    started_at=assignment_row["started_at"],
+                    ended_at=assignment_row["ended_at"],
+                    actual_driver_amount=(
+                        self._optional_decimal(
+                            assignment_row[
+                                "actual_driver_amount"
+                            ]
+                        )
+                    ),
+                )
+            )
+
+        units: list[FreightTransportUnitDetails] = []
+
+        for unit_row in unit_rows:
+            unit_id = unit_row[
+                "freight_transport_unit_id"
+            ]
+            vehicle_id = unit_row[
+                "freight_vehicle_record_id"
+            ]
+
+            vehicle = None
+            if vehicle_id is not None:
+                vehicle = FreightVehicleDetails(
+                    freight_vehicle_record_id=vehicle_id,
+                    vehicle_type=FreightVehicleType(
+                        unit_row["vehicle_type"]
+                    ),
+                    plate=self._required_text(
+                        unit_row["plate"],
+                        "placa do veículo",
+                    ),
+                    axle_count=unit_row["axle_count"],
+                    pallet_capacity_min=(
+                        unit_row["pallet_capacity_min"]
+                    ),
+                    pallet_capacity_max=(
+                        unit_row["pallet_capacity_max"]
+                    ),
+                    payload_capacity_kg=(
+                        unit_row["payload_capacity_kg"]
+                    ),
+                )
+
+            units.append(
+                FreightTransportUnitDetails(
+                    freight_transport_unit_id=unit_id,
+                    position=unit_row["position"],
+                    vehicle=vehicle,
+                    driver_assignments=tuple(
+                        assignments_by_unit.get(
+                            unit_id,
+                            (),
+                        )
+                    ),
+                )
+            )
+
+        return tuple(units)
+
+    def _load_expenses(
+        self,
+        freight_id: int,
+    ) -> tuple[FreightExpenseDetails, ...]:
+
+        rows = (
+            self._session.execute(
+                select(
+                    FreightExpenseModel.freight_expense_id.label(
+                        "freight_expense_id"
+                    ),
+                    FreightExpenseModel.expense_type.label(
+                        "expense_type"
+                    ),
+                    FreightExpenseModel.custom_description.label(
+                        "custom_description"
+                    ),
+                    FreightExpenseModel.value.label(
+                        "value"
+                    ),
+                    FreightExpenseModel.occurred_at.label(
+                        "occurred_at"
+                    ),
+                    FreightExpenseModel.observation.label(
+                        "observation"
+                    ),
+                    FreightExpenseModel.is_considered.label(
+                        "is_considered"
+                    ),
+                )
+                .where(
+                    FreightExpenseModel.freight_id == freight_id
+                )
+                .order_by(
+                    FreightExpenseModel.occurred_at,
+                    FreightExpenseModel.freight_expense_id,
+                )
+            )
+            .mappings()
+            .all()
+        )
+
+        return tuple(
+            FreightExpenseDetails(
+                freight_expense_id=row["freight_expense_id"],
+                expense_type=FreightExpenseType(
+                    row["expense_type"]
+                ),
+                value=self._decimal(row["value"]),
+                occurred_at=row["occurred_at"],
+                custom_description=self._optional_text(
+                    row["custom_description"]
+                ),
+                observation=self._optional_text(
+                    row["observation"]
+                ),
+                is_considered=bool(row["is_considered"]),
+            )
+            for row in rows
+        )
+
+    def _load_events(
+        self,
+        freight_id: int,
+    ) -> tuple[FreightEventDetails, ...]:
+
+        rows = (
+            self._session.execute(
+                select(
+                    FreightEventModel.freight_event_id.label(
+                        "freight_event_id"
+                    ),
+                    FreightEventModel.event_type.label(
+                        "event_type"
+                    ),
+                    FreightEventModel.previous_status.label(
+                        "previous_status"
+                    ),
+                    FreightEventModel.new_status.label(
+                        "new_status"
+                    ),
+                    FreightEventModel.observation.label(
+                        "observation"
+                    ),
+                    FreightEventModel.occurred_at.label(
+                        "occurred_at"
+                    ),
+                    FreightEventModel.user_id.label(
+                        "user_id"
+                    ),
+                )
+                .where(
+                    FreightEventModel.freight_id == freight_id
+                )
+                .order_by(
+                    FreightEventModel.occurred_at,
+                    FreightEventModel.freight_event_id,
+                )
+            )
+            .mappings()
+            .all()
+        )
+
+        return tuple(
+            FreightEventDetails(
+                freight_event_id=row["freight_event_id"],
+                event_type=FreightEventType(
+                    row["event_type"]
+                ),
+                previous_status=(
+                    FreightStatus(row["previous_status"])
+                    if row["previous_status"] is not None
+                    else None
+                ),
+                new_status=FreightStatus(
+                    row["new_status"]
+                ),
+                observation=self._optional_text(
+                    row["observation"]
+                ),
+                occurred_at=row["occurred_at"],
+                user_id=row["user_id"],
+            )
+            for row in rows
+        )
+
+    def _load_financial_result(
+        self,
+        freight_id: int,
+    ) -> FreightFinancialDetails | None:
+
+        row = (
+            self._session.execute(
+                select(
+                    FreightFinancialResultModel
+                    .freight_financial_result_id.label(
+                        "freight_financial_result_id"
+                    ),
+                    FreightFinancialResultModel
+                    .contracted_revenue.label(
+                        "contracted_revenue"
+                    ),
+                    FreightFinancialResultModel
+                    .actual_driver_amount.label(
+                        "actual_driver_amount"
+                    ),
+                    FreightFinancialResultModel.toll_amount.label(
+                        "toll_amount"
+                    ),
+                    FreightFinancialResultModel
+                    .actual_expenses_total.label(
+                        "actual_expenses_total"
+                    ),
+                    FreightFinancialResultModel
+                    .freight_insurance_total.label(
+                        "freight_insurance_total"
+                    ),
+                    FreightFinancialResultModel.tax_total.label(
+                        "tax_total"
+                    ),
+                    FreightFinancialResultModel
+                    .administrative_cost_allocated.label(
+                        "administrative_cost_allocated"
+                    ),
+                    FreightFinancialResultModel.total_cost.label(
+                        "total_cost"
+                    ),
+                    FreightFinancialResultModel.realized_result.label(
+                        "realized_result"
+                    ),
+                    FreightFinancialResultModel.realized_margin.label(
+                        "realized_margin"
+                    ),
+                    FreightFinancialResultModel.finalized_at.label(
+                        "finalized_at"
+                    ),
+                )
+                .where(
+                    FreightFinancialResultModel.freight_id
+                    == freight_id
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
+
         if row is None:
             return None
 
-        return self._to_details(row)
+        return FreightFinancialDetails(
+            freight_financial_result_id=(
+                row["freight_financial_result_id"]
+            ),
+            contracted_revenue=self._decimal(
+                row["contracted_revenue"]
+            ),
+            actual_driver_amount=self._decimal(
+                row["actual_driver_amount"]
+            ),
+            toll_amount=self._decimal(
+                row["toll_amount"]
+            ),
+            actual_expenses_total=self._decimal(
+                row["actual_expenses_total"]
+            ),
+            freight_insurance_total=self._decimal(
+                row["freight_insurance_total"]
+            ),
+            tax_total=self._decimal(
+                row["tax_total"]
+            ),
+            administrative_cost_allocated=self._decimal(
+                row["administrative_cost_allocated"]
+            ),
+            total_cost=self._decimal(
+                row["total_cost"]
+            ),
+            realized_result=self._decimal(
+                row["realized_result"]
+            ),
+            realized_margin=self._optional_decimal(
+                row["realized_margin"]
+            ),
+            finalized_at=row["finalized_at"],
+        )
 
     @staticmethod
     def _base_statement():
@@ -307,16 +769,24 @@ class SqlAlchemyFreightQueryRepository(
     def _to_details(
         cls,
         row,
+        *,
+        transport_units: tuple[
+            FreightTransportUnitDetails,
+            ...
+        ],
+        expenses: tuple[FreightExpenseDetails, ...],
+        events: tuple[FreightEventDetails, ...],
+        financial_result: FreightFinancialDetails | None,
     ) -> FreightDetails:
         return FreightDetails(
             freight_id=row["freight_id"],
             customer_id=row["customer_id"],
-            customer_legal_name=row[
-                "customer_legal_name"
-            ],
-            customer_trade_name=row[
-                "customer_trade_name"
-            ],
+            customer_legal_name=cls._optional_text(
+                row["customer_legal_name"]
+            ),
+            customer_trade_name=cls._optional_text(
+                row["customer_trade_name"]
+            ),
             primary_quote_id=row["primary_quote_id"],
             primary_quote_number=cls._required_text(
                 row["primary_quote_number"],
@@ -351,6 +821,10 @@ class SqlAlchemyFreightQueryRepository(
             started_at=row["started_at"],
             completed_at=row["completed_at"],
             cancelled_at=row["cancelled_at"],
+            transport_units=transport_units,
+            expenses=expenses,
+            events=events,
+            financial_result=financial_result,
         )
 
     @staticmethod
@@ -366,7 +840,25 @@ class SqlAlchemyFreightQueryRepository(
         return value.strip()
 
     @staticmethod
+    def _optional_text(
+        value: str | None,
+    ) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip()
+        return normalized or None
+
+    @staticmethod
     def _decimal(value) -> Decimal:
         if isinstance(value, Decimal):
             return value
         return Decimal(str(value))
+
+    @classmethod
+    def _optional_decimal(
+        cls,
+        value,
+    ) -> Decimal | None:
+        if value is None:
+            return None
+        return cls._decimal(value)

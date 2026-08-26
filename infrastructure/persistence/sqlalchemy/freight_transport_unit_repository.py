@@ -181,6 +181,28 @@ class SqlAlchemyFreightTransportUnitRepository(
             result or 0
         )
 
+    def delete_by_id(
+        self,
+        freight_transport_unit_id: int
+    ) -> None:
+        try:
+            model = self._session.get(
+                FreightTransportUnitModel,
+                freight_transport_unit_id
+            )
+
+            if model is None:
+                return
+
+            self._session.delete(model)
+            self._session.flush()
+
+        except SQLAlchemyError as error:
+            raise FreightPersistenceError(
+                "Não foi possível remover a unidade "
+                "de transporte do frete"
+            ) from error
+
     @staticmethod
     def _to_model(
         transport_unit: FreightTransportUnit
