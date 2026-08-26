@@ -6,6 +6,7 @@ from domain.models.freight import FreightStatus
 from domain.models.freight_event import FreightEventType
 from domain.models.freight_expense import FreightExpenseType
 from domain.models.freight_vehicle_record import FreightVehicleType
+from domain.models.vehicle import VehicleType
 
 
 @dataclass(frozen=True)
@@ -46,6 +47,20 @@ class FreightVehicleDetails:
 
 
 @dataclass(frozen=True)
+class FreightOperationalAssignmentDetails:
+    freight_operational_assignment_id: int
+    transport_provider_id: int
+    vehicle_id: int
+    provider_name_snapshot: str
+    provider_tax_document_snapshot: str
+    driver_name_snapshot: str
+    driver_cpf_snapshot: str
+    vehicle_plate_snapshot: str
+    vehicle_type_snapshot: VehicleType
+    created_at: datetime
+
+
+@dataclass(frozen=True)
 class FreightDriverAssignmentDetails:
     freight_driver_assignment_id: int
     driver_id: int
@@ -53,6 +68,9 @@ class FreightDriverAssignmentDetails:
     started_at: datetime
     ended_at: datetime | None
     actual_driver_amount: Decimal | None
+    operational_context: (
+        FreightOperationalAssignmentDetails | None
+    ) = None
 
     @property
     def is_active(self) -> bool:

@@ -4,8 +4,12 @@ import customtkinter as ctk
 
 from application.dtos.freight_query import (
     FreightDetails,
+    FreightDriverAssignmentDetails,
     FreightExpenseDetails,
     FreightTransportUnitDetails,
+)
+from domain.models.freight import (
+    FreightStatus,
 )
 from presentation.desktop.async_task_runner import (
     TkAsyncTaskRunner,
@@ -27,8 +31,28 @@ from presentation.desktop.freight_operational_inputs import (
     start_readiness_message,
     unit_has_active_driver,
 )
+from presentation.desktop.freight_operational_context_rules import (
+    active_operational_context,
+    can_adopt_current_operational_context,
+    can_finish_current_operational_context,
+    can_replace_current_operational_context,
+)
+from presentation.desktop.freight_completion_inputs import (
+    can_complete_freight,
+    completion_readiness_message,
+    is_freight_completion_phase,
+)
 from presentation.desktop.freight_driver_dialog import (
     FreightDriverDialog,
+)
+from presentation.desktop.freight_finish_driver_dialog import (
+    FreightFinishDriverDialog,
+)
+from presentation.desktop.freight_finish_operational_assignment_dialog import (
+    FreightFinishOperationalAssignmentDialog,
+)
+from presentation.desktop.freight_operational_assignment_replace_dialog import (
+    FreightOperationalAssignmentReplaceDialog,
 )
 from presentation.desktop.freight_vehicle_dialog import (
     FreightVehicleDialog,
@@ -57,9 +81,15 @@ class FreightDetailView:
         replace_vehicle_callback,
         search_available_vehicles_callback,
         search_available_drivers_callback,
+        search_transport_providers_callback,
+        get_transport_provider_details_callback,
         assign_driver_callback,
         replace_driver_callback,
+        finish_driver_callback,
+        adopt_current_operational_assignment_callback,
+        replace_in_progress_operational_assignment_callback,
         start_freight_callback,
+        complete_freight_callback,
         navigate_back,
     ):
         self.parent = parent
@@ -82,9 +112,23 @@ class FreightDetailView:
         self._search_available_drivers_callback = (
             search_available_drivers_callback
         )
+        self._search_transport_providers_callback = (
+            search_transport_providers_callback
+        )
+        self._get_transport_provider_details_callback = (
+            get_transport_provider_details_callback
+        )
         self._assign_driver_callback = assign_driver_callback
         self._replace_driver_callback = replace_driver_callback
+        self._finish_driver_callback = finish_driver_callback
+        self._adopt_current_operational_assignment_callback = (
+            adopt_current_operational_assignment_callback
+        )
+        self._replace_in_progress_operational_assignment_callback = (
+            replace_in_progress_operational_assignment_callback
+        )
         self._start_freight_callback = start_freight_callback
+        self._complete_freight_callback = complete_freight_callback
         self._navigate_back = navigate_back
         self._is_loading = False
         self._is_operation_running = False
@@ -238,6 +282,21 @@ class FreightDetailView:
             pady=8,
         )
 
+        self.complete_freight_button = ctk.CTkButton(
+            self.operation_frame,
+            text="Concluir frete",
+            width=120,
+            state="disabled",
+            command=self._complete_freight,
+        )
+        self.complete_freight_button.grid(
+            row=0,
+            column=2,
+            padx=(6, 10),
+            pady=8,
+        )
+        self.complete_freight_button.grid_remove()
+
         self.readiness_label = ctk.CTkLabel(
             self.operation_frame,
             text="",
@@ -331,20 +390,45 @@ class FreightDetailView:
             )
         )
 
-        if is_pending_setup_available(
+        pending_phase = is_pending_setup_available(
             details.current_status
-        ):
+        )
+        completion_phase = is_freight_completion_phase(
+            details.current_status
+        )
+
+        if pending_phase or completion_phase:
             self.operation_frame.grid()
         else:
             self.operation_frame.grid_remove()
 
+        if pending_phase:
+            self.add_unit_button.grid()
+            self.start_freight_button.grid()
+            self.complete_freight_button.grid_remove()
+            self.readiness_label.configure(
+                text=start_readiness_message(details)
+            )
+        elif completion_phase:
+            self.add_unit_button.grid_remove()
+            self.start_freight_button.grid_remove()
+            self.complete_freight_button.grid()
+            self.readiness_label.configure(
+                text=completion_readiness_message(details)
+            )
+        else:
+            self.add_unit_button.grid_remove()
+            self.start_freight_button.grid_remove()
+            self.complete_freight_button.grid_remove()
+            self.readiness_label.configure(
+                text=""
+            )
+
         self._operation_buttons = [
             self.add_unit_button,
             self.start_freight_button,
+            self.complete_freight_button,
         ]
-        self.readiness_label.configure(
-            text=start_readiness_message(details)
-        )
 
         for frame in self._tab_frames.values():
             for widget in frame.winfo_children():
@@ -407,6 +491,9 @@ class FreightDetailView:
                 details.current_status
             )
         )
+        allow_in_progress_actions = (
+            details.current_status == FreightStatus.IN_PROGRESS
+        )
 
         last_unit_id = max(
             details.transport_units,
@@ -424,6 +511,7 @@ class FreightDetailView:
                 frame,
                 unit,
                 allow_pending_actions,
+                allow_in_progress_actions,
                 allow_remove,
             )
 
@@ -432,6 +520,7 @@ class FreightDetailView:
         parent,
         unit: FreightTransportUnitDetails,
         allow_pending_actions: bool,
+        allow_in_progress_actions: bool,
         allow_remove: bool,
     ) -> None:
         card = ctk.CTkFrame(parent)
@@ -452,6 +541,97 @@ class FreightDetailView:
             text=f"Unidade {unit.position}",
             font=("Arial", 14, "bold"),
         ).pack(side="left")
+
+        active_context = active_operational_context(unit)
+
+        if (
+            active_context is None
+            and can_adopt_current_operational_context(
+                status=self._current_details.current_status,
+                has_vehicle=unit.vehicle is not None,
+                has_active_driver=unit_has_active_driver(unit),
+            )
+        ):
+            adopt_button = ctk.CTkButton(
+                unit_header,
+                text="Reconhecer conjunto atual",
+                width=175,
+                command=lambda current_unit=unit: (
+                    self._adopt_current_operational_assignment(
+                        current_unit
+                    )
+                ),
+            )
+            adopt_button.pack(
+                side="right",
+                padx=(8, 0),
+            )
+            self._operation_buttons.append(
+                adopt_button
+            )
+
+        if active_context is not None:
+            if (
+                allow_in_progress_actions
+                and can_replace_current_operational_context(
+                    status=self._current_details.current_status,
+                    active_context=active_context,
+                )
+            ):
+                replace_context_button = ctk.CTkButton(
+                    unit_header,
+                    text="Trocar conjunto operacional",
+                    width=190,
+                    command=lambda current_unit=unit: (
+                        self._replace_operational_assignment(
+                            current_unit
+                        )
+                    ),
+                )
+                replace_context_button.pack(
+                    side="right",
+                    padx=(8, 0),
+                )
+                self._operation_buttons.append(
+                    replace_context_button
+                )
+
+            if can_finish_current_operational_context(
+                status=self._current_details.current_status,
+                active_context=active_context,
+                has_active_driver=unit_has_active_driver(unit),
+            ):
+                finish_context_button = ctk.CTkButton(
+                    unit_header,
+                    text="Encerrar conjunto operacional",
+                    width=200,
+                    command=lambda current_unit=unit: (
+                        self._finish_operational_assignment(
+                            current_unit
+                        )
+                    ),
+                )
+                finish_context_button.pack(
+                    side="right",
+                    padx=(8, 0),
+                )
+                self._operation_buttons.append(
+                    finish_context_button
+                )
+
+            ctk.CTkLabel(
+                unit_header,
+                text=(
+                    "Conjunto atual: "
+                    f"{active_context.provider_name_snapshot} | "
+                    f"{active_context.driver_name_snapshot} | "
+                    f"{active_context.vehicle_plate_snapshot}"
+                ),
+                font=("Arial", 11, "bold"),
+            ).pack(
+                side="right",
+                padx=(8, 0),
+            )
 
         if allow_remove:
             remove_button = ctk.CTkButton(
@@ -601,6 +781,7 @@ class FreightDetailView:
                 assign_button.pack(side="right")
                 self._operation_buttons.append(assign_button)
 
+
         if not unit.driver_assignments:
             ctk.CTkLabel(
                 card,
@@ -613,6 +794,18 @@ class FreightDetailView:
             amount = format_currency(
                 assignment.actual_driver_amount
             )
+            context = assignment.operational_context
+            context_text = (
+                (
+                    f" | Prestador "
+                    f"{context.provider_name_snapshot}"
+                    f" | Veículo "
+                    f"{context.vehicle_plate_snapshot}"
+                )
+                if context is not None
+                else ""
+            )
+
             ctk.CTkLabel(
                 card,
                 text=(
@@ -620,6 +813,7 @@ class FreightDetailView:
                     f"Início {format_datetime(assignment.started_at)} | "
                     f"Fim {format_datetime(assignment.ended_at)} | "
                     f"Realizado {amount}"
+                    f"{context_text}"
                 ),
                 justify="left",
                 anchor="w",
@@ -838,9 +1032,10 @@ class FreightDetailView:
             self._is_loading
             or self._is_operation_running
             or self._current_details is None
-            or not is_pending_setup_available(
-                self._current_details.current_status
-            )
+            or self._current_details.current_status not in {
+                FreightStatus.PENDING,
+                FreightStatus.IN_PROGRESS,
+            }
             or unit_has_active_driver(unit)
         ):
             return
@@ -934,6 +1129,285 @@ class FreightDetailView:
                 f"Motorista da Unidade {unit.position} trocado "
                 f"para {selected_driver.name}."
             ),
+        )
+
+    def _finish_operational_assignment(
+        self,
+        unit: FreightTransportUnitDetails,
+    ) -> None:
+        if (
+            self._is_loading
+            or self._is_operation_running
+            or self._current_details is None
+        ):
+            return
+
+        current_context = active_operational_context(
+            unit
+        )
+        active_assignment = next(
+            (
+                assignment
+                for assignment in unit.driver_assignments
+                if assignment.is_active
+            ),
+            None,
+        )
+
+        if (
+            active_assignment is None
+            or not can_finish_current_operational_context(
+                status=self._current_details.current_status,
+                active_context=current_context,
+                has_active_driver=True,
+            )
+        ):
+            return
+
+        dialog = FreightFinishOperationalAssignmentDialog(
+            parent=self.parent,
+            unit_position=unit.position,
+            current_context=current_context,
+        )
+
+        if dialog.result is None:
+            return
+
+        actual_transport_amount = dialog.result
+
+        if not messagebox.askyesno(
+            "Encerrar conjunto operacional",
+            (
+                "Encerrar o conjunto atual:\n"
+                f"{current_context.provider_name_snapshot} | "
+                f"{current_context.driver_name_snapshot} | "
+                f"{current_context.vehicle_plate_snapshot}\n\n"
+                "Valor realizado pelo conjunto: "
+                f"R$ {actual_transport_amount:.2f}\n\n"
+                "Depois desta operação a unidade ficará sem "
+                "conjunto operacional ativo."
+            ),
+            parent=self.parent.winfo_toplevel(),
+        ):
+            return
+
+        self._run_operation(
+            task=lambda: self._finish_driver_callback(
+                freight_driver_assignment_id=(
+                    active_assignment
+                    .freight_driver_assignment_id
+                ),
+                actual_driver_amount=(
+                    actual_transport_amount
+                ),
+            ),
+            success_message=(
+                f"Conjunto operacional da Unidade "
+                f"{unit.position} encerrado."
+            ),
+        )
+
+    def _replace_operational_assignment(
+        self,
+        unit: FreightTransportUnitDetails,
+    ) -> None:
+        if (
+            self._is_loading
+            or self._is_operation_running
+            or self._current_details is None
+        ):
+            return
+
+        current_context = active_operational_context(
+            unit
+        )
+        if not can_replace_current_operational_context(
+            status=self._current_details.current_status,
+            active_context=current_context,
+        ):
+            return
+
+        dialog = FreightOperationalAssignmentReplaceDialog(
+            parent=self.parent,
+            unit_position=unit.position,
+            current_context=current_context,
+            search_transport_providers_callback=(
+                self._search_transport_providers_callback
+            ),
+            get_transport_provider_details_callback=(
+                self._get_transport_provider_details_callback
+            ),
+        )
+
+        if dialog.result is None:
+            return
+
+        selection = dialog.result
+
+        if not messagebox.askyesno(
+            "Trocar conjunto operacional",
+            (
+                "Encerrar o conjunto atual:\n"
+                f"{current_context.provider_name_snapshot} | "
+                f"{current_context.driver_name_snapshot} | "
+                f"{current_context.vehicle_plate_snapshot}\n"
+                f"Valor realizado: R$ "
+                f"{selection.actual_transport_amount:.2f}\n\n"
+                "E iniciar o novo conjunto:\n"
+                f"{selection.provider_name} | "
+                f"{selection.driver_name} | "
+                f"{selection.vehicle_plate}?"
+            ),
+            parent=self.parent.winfo_toplevel(),
+        ):
+            return
+
+        self._run_operation(
+            task=lambda: (
+                self._replace_in_progress_operational_assignment_callback(
+                    freight_transport_unit_id=(
+                        unit.freight_transport_unit_id
+                    ),
+                    transport_provider_id=(
+                        selection.transport_provider_id
+                    ),
+                    driver_id=selection.driver_id,
+                    vehicle_id=selection.vehicle_id,
+                    actual_transport_amount=(
+                        selection.actual_transport_amount
+                    ),
+                )
+            ),
+            success_message=(
+                f"Conjunto operacional da Unidade "
+                f"{unit.position} trocado para "
+                f"{selection.provider_name} | "
+                f"{selection.driver_name} | "
+                f"{selection.vehicle_plate}."
+            ),
+        )
+
+    def _adopt_current_operational_assignment(
+        self,
+        unit: FreightTransportUnitDetails,
+    ) -> None:
+        if (
+            self._is_loading
+            or self._is_operation_running
+            or self._current_details is None
+            or not can_adopt_current_operational_context(
+                status=self._current_details.current_status,
+                has_vehicle=unit.vehicle is not None,
+                has_active_driver=unit_has_active_driver(unit),
+            )
+        ):
+            return
+
+        if not messagebox.askyesno(
+            "Reconhecer conjunto atual",
+            (
+                f"Reconhecer o motorista e o veículo atuais "
+                f"da Unidade {unit.position} como um único "
+                "conjunto operacional?\n\n"
+                "O prestador será identificado pelos vínculos "
+                "cadastrais atuais do motorista e do veículo."
+            ),
+            parent=self.parent.winfo_toplevel(),
+        ):
+            return
+
+        self._run_operation(
+            task=lambda: (
+                self._adopt_current_operational_assignment_callback(
+                    freight_transport_unit_id=(
+                        unit.freight_transport_unit_id
+                    ),
+                )
+            ),
+            success_message=(
+                f"Conjunto operacional da Unidade "
+                f"{unit.position} reconhecido."
+            ),
+        )
+
+    def _finish_driver(
+        self,
+        assignment: FreightDriverAssignmentDetails,
+    ) -> None:
+        if (
+            self._is_loading
+            or self._is_operation_running
+            or self._current_details is None
+            or self._current_details.current_status
+            != FreightStatus.IN_PROGRESS
+            or not assignment.is_active
+        ):
+            return
+
+        dialog = FreightFinishDriverDialog(
+            parent=self.parent,
+            driver_name=assignment.driver_name,
+        )
+
+        if dialog.result is None:
+            return
+
+        actual_driver_amount = dialog.result
+
+        if not messagebox.askyesno(
+            "Encerrar motorista",
+            (
+                f"Encerrar a participação de "
+                f"{assignment.driver_name}?\n\n"
+                f"Valor realizado: R$ "
+                f"{actual_driver_amount:.2f}"
+            ),
+            parent=self.parent,
+        ):
+            return
+
+        self._run_operation(
+            task=lambda: self._finish_driver_callback(
+                freight_driver_assignment_id=(
+                    assignment.freight_driver_assignment_id
+                ),
+                actual_driver_amount=actual_driver_amount,
+            ),
+            success_message=(
+                f"Participação de {assignment.driver_name} "
+                "encerrada."
+            ),
+        )
+
+    def _complete_freight(self) -> None:
+        if (
+            self._is_loading
+            or self._is_operation_running
+            or self._current_details is None
+            or not can_complete_freight(
+                self._current_details
+            )
+        ):
+            return
+
+        if not messagebox.askyesno(
+            "Concluir frete",
+            (
+                "Todas as unidades estão operacionalmente "
+                "encerradas.\n\n"
+                "Concluir este frete?\n\n"
+                "Após a conclusão, o status operacional será "
+                "terminal."
+            ),
+            parent=self.parent.winfo_toplevel(),
+        ):
+            return
+
+        self._run_operation(
+            task=lambda: self._complete_freight_callback(
+                freight_id=self.freight_id
+            ),
+            success_message="Frete concluído.",
         )
 
     def _start_freight(self) -> None:
@@ -1063,6 +1537,15 @@ class FreightDetailView:
             state=(
                 "normal"
                 if can_start_freight(
+                    self._current_details
+                )
+                else "disabled"
+            )
+        )
+        self.complete_freight_button.configure(
+            state=(
+                "normal"
+                if can_complete_freight(
                     self._current_details
                 )
                 else "disabled"

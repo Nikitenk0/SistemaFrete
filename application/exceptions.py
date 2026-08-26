@@ -118,6 +118,10 @@ class FreightDriverAssignmentPersistenceError(ApplicationError):
     """Falha ao persistir ou consultar participação de motorista."""
 
 
+class FreightOperationalAssignmentPersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar contexto operacional do frete."""
+
+
 class FreightVehicleRecordPersistenceError(ApplicationError):
     """Falha ao persistir ou consultar veículo operacional do frete."""
 
@@ -148,3 +152,27 @@ class VehicleNotFoundError(ApplicationError):
 
 class VehiclePersistenceError(ApplicationError):
     """Falha ao persistir ou consultar veículo."""
+
+
+class InvalidTransportProviderDataError(ApplicationError):
+    """Os dados fornecidos para o prestador são inválidos."""
+
+
+class TransportProviderAlreadyExistsError(ApplicationError):
+    """Já existe prestador com o documento informado."""
+
+
+class TransportProviderNotFoundError(ApplicationError):
+    """Prestador de transporte não encontrado."""
+
+
+class InvalidTransportProviderStateError(ApplicationError):
+    """O prestador não permite a operação no estado atual."""
+
+
+class TransportProviderPersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar prestador de transporte."""
+
+
+class TransportProviderAffiliationPersistenceError(ApplicationError):
+    """Falha ao persistir ou consultar vínculo do prestador."""

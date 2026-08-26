@@ -11,6 +11,7 @@ from domain.models.freight import FreightStatus
 from domain.models.freight_event import FreightEventType
 from domain.models.freight_expense import FreightExpenseType
 from domain.models.freight_vehicle_record import FreightVehicleType
+from domain.models.vehicle import VehicleType
 from infrastructure.persistence.sqlalchemy.freight_query_repository import (
     SqlAlchemyFreightQueryRepository,
 )
@@ -108,6 +109,16 @@ def make_assignment_row(**changes):
         "started_at": NOW,
         "ended_at": LATER,
         "actual_driver_amount": Decimal("2300.00"),
+        "freight_operational_assignment_id": None,
+        "operational_transport_provider_id": None,
+        "operational_vehicle_id": None,
+        "provider_name_snapshot": None,
+        "provider_tax_document_snapshot": None,
+        "driver_name_snapshot": None,
+        "driver_cpf_snapshot": None,
+        "vehicle_plate_snapshot": None,
+        "vehicle_type_snapshot": None,
+        "operational_context_created_at": None,
     }
     row.update(changes)
     return row
@@ -311,7 +322,18 @@ class FreightQueryRepositoryTests(unittest.TestCase):
             batches=detail_batches(
                 units=(make_unit_row(), second_unit),
                 assignments=(
-                    make_assignment_row(),
+                    make_assignment_row(
+                        freight_operational_assignment_id=701,
+                        operational_transport_provider_id=81,
+                        operational_vehicle_id=91,
+                        provider_name_snapshot="Prestador Historico",
+                        provider_tax_document_snapshot="12345678000190",
+                        driver_name_snapshot="Motorista Historico",
+                        driver_cpf_snapshot="12345678901",
+                        vehicle_plate_snapshot="ABC1D23",
+                        vehicle_type_snapshot="CARRETA_LS",
+                        operational_context_created_at=NOW,
+                    ),
                     active_assignment,
                 ),
                 expenses=(
@@ -343,6 +365,22 @@ class FreightQueryRepositoryTests(unittest.TestCase):
         self.assertEqual(
             unit_1.driver_assignments[0].actual_driver_amount,
             Decimal("2300.00"),
+        )
+        operational_context = (
+            unit_1.driver_assignments[0].operational_context
+        )
+        self.assertIsNotNone(operational_context)
+        self.assertEqual(
+            operational_context.provider_name_snapshot,
+            "Prestador Historico",
+        )
+        self.assertEqual(
+            operational_context.vehicle_plate_snapshot,
+            "ABC1D23",
+        )
+        self.assertEqual(
+            operational_context.vehicle_type_snapshot,
+            VehicleType.CARRETA_LS,
         )
 
         unit_2 = result.transport_units[1]
@@ -413,6 +451,7 @@ class FreightQueryRepositoryTests(unittest.TestCase):
         self.assertIn("freight_transport_units", sql)
         self.assertIn("freight_vehicle_records", sql)
         self.assertIn("freight_driver_assignments", sql)
+        self.assertIn("freight_operational_assignments", sql)
         self.assertIn("JOIN drivers", sql)
         self.assertIn("freight_expenses", sql)
         self.assertIn("freight_events", sql)

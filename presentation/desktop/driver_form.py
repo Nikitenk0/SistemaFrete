@@ -285,6 +285,26 @@ class DriverForm:
             )
             self.status_combo.set(status_label)
 
+    def prefill_identity(
+        self,
+        *,
+        name: str = "",
+        cpf: str = "",
+        lock_cpf: bool = False,
+    ) -> None:
+        name_entry = self._entries["name"]
+        cpf_entry = self._entries["cpf"]
+
+        name_entry.delete(0, "end")
+        name_entry.insert(0, name)
+
+        cpf_entry.configure(state="normal")
+        cpf_entry.delete(0, "end")
+        cpf_entry.insert(0, cpf)
+
+        if lock_cpf:
+            cpf_entry.configure(state="disabled")
+
     def focus_name(self) -> None:
         self._entries["name"].focus_set()
 

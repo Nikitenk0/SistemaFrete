@@ -12,6 +12,7 @@ from application.dtos.freight_query import (
     FreightExpenseDetails,
     FreightFinancialDetails,
     FreightListItem,
+    FreightOperationalAssignmentDetails,
     FreightQueryFilters,
     FreightTransportUnitDetails,
     FreightVehicleDetails,
@@ -24,6 +25,7 @@ from domain.models.freight import FreightStatus
 from domain.models.freight_event import FreightEventType
 from domain.models.freight_expense import FreightExpenseType
 from domain.models.freight_vehicle_record import FreightVehicleType
+from domain.models.vehicle import VehicleType
 from domain.models.quote import QuoteStatus, QuoteType
 from infrastructure.persistence.sqlalchemy.models import (
     DriverModel,
@@ -32,6 +34,7 @@ from infrastructure.persistence.sqlalchemy.models import (
     FreightExpenseModel,
     FreightFinancialResultModel,
     FreightModel,
+    FreightOperationalAssignmentModel,
     FreightTransportUnitModel,
     FreightVehicleRecordModel,
     QuoteModel,
@@ -236,6 +239,46 @@ class SqlAlchemyFreightQueryRepository(
                     .actual_driver_amount.label(
                         "actual_driver_amount"
                     ),
+                    FreightOperationalAssignmentModel
+                    .freight_operational_assignment_id.label(
+                        "freight_operational_assignment_id"
+                    ),
+                    FreightOperationalAssignmentModel
+                    .transport_provider_id.label(
+                        "operational_transport_provider_id"
+                    ),
+                    FreightOperationalAssignmentModel
+                    .vehicle_id.label(
+                        "operational_vehicle_id"
+                    ),
+                    FreightOperationalAssignmentModel
+                    .provider_name_snapshot.label(
+                        "provider_name_snapshot"
+                    ),
+                    FreightOperationalAssignmentModel
+                    .provider_tax_document_snapshot.label(
+                        "provider_tax_document_snapshot"
+                    ),
+                    FreightOperationalAssignmentModel
+                    .driver_name_snapshot.label(
+                        "driver_name_snapshot"
+                    ),
+                    FreightOperationalAssignmentModel
+                    .driver_cpf_snapshot.label(
+                        "driver_cpf_snapshot"
+                    ),
+                    FreightOperationalAssignmentModel
+                    .vehicle_plate_snapshot.label(
+                        "vehicle_plate_snapshot"
+                    ),
+                    FreightOperationalAssignmentModel
+                    .vehicle_type_snapshot.label(
+                        "vehicle_type_snapshot"
+                    ),
+                    FreightOperationalAssignmentModel
+                    .created_at.label(
+                        "operational_context_created_at"
+                    ),
                 )
                 .select_from(FreightDriverAssignmentModel)
                 .join(
@@ -249,6 +292,13 @@ class SqlAlchemyFreightQueryRepository(
                     DriverModel,
                     DriverModel.driver_id
                     == FreightDriverAssignmentModel.driver_id,
+                )
+                .outerjoin(
+                    FreightOperationalAssignmentModel,
+                    FreightOperationalAssignmentModel
+                    .freight_driver_assignment_id
+                    == FreightDriverAssignmentModel
+                    .freight_driver_assignment_id,
                 )
                 .where(
                     FreightTransportUnitModel.freight_id
@@ -271,6 +321,79 @@ class SqlAlchemyFreightQueryRepository(
         ] = defaultdict(list)
 
         for assignment_row in assignment_rows:
+            operational_context = None
+            if (
+                assignment_row[
+                    "freight_operational_assignment_id"
+                ]
+                is not None
+            ):
+                operational_context = (
+                    FreightOperationalAssignmentDetails(
+                        freight_operational_assignment_id=(
+                            assignment_row[
+                                "freight_operational_assignment_id"
+                            ]
+                        ),
+                        transport_provider_id=(
+                            assignment_row[
+                                "operational_transport_provider_id"
+                            ]
+                        ),
+                        vehicle_id=assignment_row[
+                            "operational_vehicle_id"
+                        ],
+                        provider_name_snapshot=(
+                            self._required_text(
+                                assignment_row[
+                                    "provider_name_snapshot"
+                                ],
+                                "nome do prestador operacional",
+                            )
+                        ),
+                        provider_tax_document_snapshot=(
+                            self._required_text(
+                                assignment_row[
+                                    "provider_tax_document_snapshot"
+                                ],
+                                "documento do prestador operacional",
+                            )
+                        ),
+                        driver_name_snapshot=(
+                            self._required_text(
+                                assignment_row[
+                                    "driver_name_snapshot"
+                                ],
+                                "nome do motorista operacional",
+                            )
+                        ),
+                        driver_cpf_snapshot=(
+                            self._required_text(
+                                assignment_row[
+                                    "driver_cpf_snapshot"
+                                ],
+                                "CPF do motorista operacional",
+                            )
+                        ),
+                        vehicle_plate_snapshot=(
+                            self._required_text(
+                                assignment_row[
+                                    "vehicle_plate_snapshot"
+                                ],
+                                "placa do veículo operacional",
+                            )
+                        ),
+                        vehicle_type_snapshot=VehicleType(
+                            assignment_row[
+                                "vehicle_type_snapshot"
+                            ]
+                        ),
+                        created_at=assignment_row[
+                            "operational_context_created_at"
+                        ],
+                    )
+                )
+
             assignments_by_unit[
                 assignment_row["freight_transport_unit_id"]
             ].append(
@@ -294,6 +417,7 @@ class SqlAlchemyFreightQueryRepository(
                             ]
                         )
                     ),
+                    operational_context=operational_context,
                 )
             )
 

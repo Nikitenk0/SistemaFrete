@@ -7,6 +7,12 @@ from application.use_cases.add_freight_transport_unit import (
 from application.use_cases.assign_driver_to_freight_transport_unit import (
     AssignDriverToFreightTransportUnit
 )
+from application.use_cases.adopt_current_freight_operational_assignment import (
+    AdoptCurrentFreightOperationalAssignment
+)
+from application.use_cases.replace_in_progress_freight_operational_assignment import (
+    ReplaceInProgressFreightOperationalAssignment
+)
 from application.use_cases.add_freight_vehicle_record import (
     AddFreightVehicleRecord
 )
@@ -16,14 +22,26 @@ from application.use_cases.calculate_closed_load_quote import (
 from application.use_cases.create_driver import (
     CreateDriver
 )
+from application.use_cases.complete_freight import (
+    CompleteFreight
+)
 from application.use_cases.create_vehicle import (
     CreateVehicle
+)
+from application.use_cases.create_transport_provider import (
+    CreateTransportProvider
 )
 from application.use_cases.get_driver import (
     GetDriver
 )
 from application.use_cases.get_vehicle import (
     GetVehicle
+)
+from application.use_cases.get_transport_provider import (
+    GetTransportProvider
+)
+from application.use_cases.get_transport_provider_details import (
+    GetTransportProviderDetails
 )
 from application.use_cases.generate_quote_pdf import (
     GenerateQuotePdf
@@ -36,6 +54,9 @@ from application.use_cases.remove_freight_vehicle_record import (
 )
 from application.use_cases.get_freight_details import (
     GetFreightDetails
+)
+from application.use_cases.finish_freight_driver_assignment import (
+    FinishFreightDriverAssignment
 )
 from application.use_cases.list_freights import (
     ListFreights
@@ -52,6 +73,9 @@ from application.use_cases.search_available_freight_vehicles import (
 from application.use_cases.search_vehicles import (
     SearchVehicles
 )
+from application.use_cases.search_transport_providers import (
+    SearchTransportProviders
+)
 from application.use_cases.start_freight import (
     StartFreight
 )
@@ -66,6 +90,15 @@ from application.use_cases.update_driver import (
 )
 from application.use_cases.update_vehicle import (
     UpdateVehicle
+)
+from application.use_cases.update_transport_provider import (
+    UpdateTransportProvider
+)
+from application.use_cases.set_driver_transport_provider_affiliation import (
+    SetDriverTransportProviderAffiliation
+)
+from application.use_cases.set_vehicle_transport_provider_affiliation import (
+    SetVehicleTransportProviderAffiliation
 )
 from config.app import (
     QUALP_EMAIL,
@@ -94,6 +127,9 @@ from infrastructure.persistence.sqlalchemy.driver_unit_of_work import (
 from infrastructure.persistence.sqlalchemy.freight_driver_assignment_unit_of_work import (
     SqlAlchemyFreightDriverAssignmentUnitOfWorkFactory,
 )
+from infrastructure.persistence.sqlalchemy.freight_operational_assignment_unit_of_work import (
+    SqlAlchemyFreightOperationalAssignmentUnitOfWorkFactory,
+)
 from infrastructure.persistence.sqlalchemy.freight_driver_selection_repository import (
     SqlAlchemyFreightDriverSelectionRepository,
 )
@@ -111,6 +147,9 @@ from infrastructure.persistence.sqlalchemy.freight_vehicle_selection_repository 
 )
 from infrastructure.persistence.sqlalchemy.vehicle_unit_of_work import (
     SqlAlchemyVehicleUnitOfWorkFactory,
+)
+from infrastructure.persistence.sqlalchemy.transport_provider_unit_of_work import (
+    SqlAlchemyTransportProviderUnitOfWorkFactory,
 )
 from infrastructure.qualp.qualp_route_searcher import (
     QualPRouteSearcher
@@ -314,8 +353,18 @@ def create_application():
             session_factory
         )
     )
+    transport_provider_unit_of_work_factory = (
+        SqlAlchemyTransportProviderUnitOfWorkFactory(
+            session_factory
+        )
+    )
     freight_driver_assignment_unit_of_work_factory = (
         SqlAlchemyFreightDriverAssignmentUnitOfWorkFactory(
+            session_factory
+        )
+    )
+    freight_operational_assignment_unit_of_work_factory = (
+        SqlAlchemyFreightOperationalAssignmentUnitOfWorkFactory(
             session_factory
         )
     )
@@ -341,6 +390,31 @@ def create_application():
     update_vehicle = UpdateVehicle(
         vehicle_unit_of_work_factory
     )
+    create_transport_provider = CreateTransportProvider(
+        transport_provider_unit_of_work_factory
+    )
+    get_transport_provider = GetTransportProvider(
+        transport_provider_unit_of_work_factory
+    )
+    get_transport_provider_details = GetTransportProviderDetails(
+        transport_provider_unit_of_work_factory
+    )
+    search_transport_providers = SearchTransportProviders(
+        transport_provider_unit_of_work_factory
+    )
+    update_transport_provider = UpdateTransportProvider(
+        transport_provider_unit_of_work_factory
+    )
+    set_driver_transport_provider_affiliation = (
+        SetDriverTransportProviderAffiliation(
+            transport_provider_unit_of_work_factory
+        )
+    )
+    set_vehicle_transport_provider_affiliation = (
+        SetVehicleTransportProviderAffiliation(
+            transport_provider_unit_of_work_factory
+        )
+    )
     add_transport_unit = AddFreightTransportUnit(
         freight_unit_of_work_factory
     )
@@ -362,7 +436,23 @@ def create_application():
     replace_driver = ReplacePendingFreightDriver(
         freight_driver_assignment_unit_of_work_factory
     )
+    finish_driver = FinishFreightDriverAssignment(
+        freight_driver_assignment_unit_of_work_factory
+    )
+    adopt_current_operational_assignment = (
+        AdoptCurrentFreightOperationalAssignment(
+            freight_operational_assignment_unit_of_work_factory
+        )
+    )
+    replace_in_progress_operational_assignment = (
+        ReplaceInProgressFreightOperationalAssignment(
+            freight_operational_assignment_unit_of_work_factory
+        )
+    )
     start_freight = StartFreight(
+        freight_unit_of_work_factory
+    )
+    complete_freight = CompleteFreight(
         freight_unit_of_work_factory
     )
 
@@ -435,14 +525,47 @@ def create_application():
         update_vehicle_callback=(
             update_vehicle.execute
         ),
+        create_transport_provider_callback=(
+            create_transport_provider.execute
+        ),
+        search_transport_providers_callback=(
+            search_transport_providers.execute
+        ),
+        get_transport_provider_callback=(
+            get_transport_provider.execute
+        ),
+        update_transport_provider_callback=(
+            update_transport_provider.execute
+        ),
+        get_transport_provider_details_callback=(
+            get_transport_provider_details.execute
+        ),
+        set_driver_transport_provider_affiliation_callback=(
+            set_driver_transport_provider_affiliation.execute
+        ),
+        set_vehicle_transport_provider_affiliation_callback=(
+            set_vehicle_transport_provider_affiliation.execute
+        ),
         assign_driver_callback=(
             assign_driver.execute
         ),
         replace_driver_callback=(
             replace_driver.execute
         ),
+        finish_driver_callback=(
+            finish_driver.execute
+        ),
+        adopt_current_operational_assignment_callback=(
+            adopt_current_operational_assignment.execute
+        ),
+        replace_in_progress_operational_assignment_callback=(
+            replace_in_progress_operational_assignment.execute
+        ),
         start_freight_callback=(
             start_freight.execute
+        ),
+        complete_freight_callback=(
+            complete_freight.execute
         ),
     )
 

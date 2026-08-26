@@ -13,6 +13,10 @@ class DriverCreateDialog:
         self,
         parent,
         create_driver_callback,
+        *,
+        initial_name: str = "",
+        initial_cpf: str = "",
+        lock_cpf: bool = False,
     ):
         self.result: Driver | None = None
         self._create_driver_callback = create_driver_callback
@@ -40,6 +44,11 @@ class DriverCreateDialog:
             sticky="nsew",
             padx=16,
             pady=(16, 8),
+        )
+        self.form.prefill_identity(
+            name=initial_name,
+            cpf=initial_cpf,
+            lock_cpf=lock_cpf,
         )
 
         bottom = ctk.CTkFrame(

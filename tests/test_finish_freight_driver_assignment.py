@@ -14,7 +14,10 @@ from application.exceptions import (
 from application.use_cases.finish_freight_driver_assignment import (
     FinishFreightDriverAssignment
 )
-from domain.models.freight import Freight
+from domain.models.freight import (
+    Freight,
+    FreightStatus
+)
 from domain.models.freight_driver_assignment import (
     FreightDriverAssignment
 )
@@ -117,8 +120,13 @@ class FakeUnitOfWork:
 
 class FakeFactory:
 
-    def __init__(self, assignment):
+    def __init__(
+        self,
+        assignment,
+        freight_status=FreightStatus.IN_PROGRESS
+    ):
         self.assignment = assignment
+        self.freight_status = freight_status
         self.created = []
 
     def create(self):
@@ -126,7 +134,14 @@ class FakeFactory:
             freight=Freight(
                 freight_id=77,
                 customer_id=5,
-                primary_quote_id=1
+                primary_quote_id=1,
+                current_status=self.freight_status,
+                started_at=(
+                    STARTED_AT
+                    if self.freight_status
+                    == FreightStatus.IN_PROGRESS
+                    else None
+                )
             ),
             transport_unit=FreightTransportUnit(
                 freight_transport_unit_id=101,
@@ -208,6 +223,25 @@ class FinishFreightDriverAssignmentTests(
 
         with self.assertRaises(
             FreightDriverAssignmentNotFoundError
+        ):
+            FinishFreightDriverAssignment(
+                factory
+            ).execute(
+                501,
+                Decimal("100.00")
+            )
+
+    def test_rejects_pending_freight(
+        self
+    ) -> None:
+        factory = FakeFactory(
+            make_active_assignment(),
+            freight_status=FreightStatus.PENDING
+        )
+
+        with self.assertRaisesRegex(
+            InvalidFreightStateError,
+            "Somente frete em andamento"
         ):
             FinishFreightDriverAssignment(
                 factory

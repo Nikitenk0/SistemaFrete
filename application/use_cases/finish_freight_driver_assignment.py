@@ -15,6 +15,9 @@ from application.exceptions import (
 from application.ports.freight_driver_assignment_unit_of_work import (
     FreightDriverAssignmentUnitOfWorkFactory
 )
+from domain.models.freight import (
+    FreightStatus
+)
 from domain.models.freight_driver_assignment import (
     FreightDriverAssignment
 )
@@ -89,6 +92,12 @@ class FinishFreightDriverAssignment:
             if freight is None:
                 raise FreightNotFoundError(
                     "Frete não encontrado"
+                )
+
+            if freight.current_status != FreightStatus.IN_PROGRESS:
+                raise InvalidFreightStateError(
+                    "Somente frete em andamento aceita "
+                    "encerramento de motorista"
                 )
 
             current_assignment = (

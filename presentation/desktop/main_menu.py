@@ -18,9 +18,6 @@ from presentation.desktop.closed_load_quote_view import (
     ClosedLoadQuoteView
 )
 from presentation.desktop.documents_view import DocumentsView
-from presentation.desktop.driver_list_view import (
-    DriverListView
-)
 from presentation.desktop.freight_detail_view import (
     FreightDetailView
 )
@@ -32,6 +29,9 @@ from presentation.desktop.tela_orcamento_complemento import (
 )
 from presentation.desktop.vehicle_list_view import (
     VehicleListView
+)
+from presentation.desktop.transport_provider_list_view import (
+    TransportProviderListView
 )
 
 
@@ -59,9 +59,20 @@ class MainMenu:
         search_vehicles_callback,
         get_vehicle_callback,
         update_vehicle_callback,
+        create_transport_provider_callback,
+        search_transport_providers_callback,
+        get_transport_provider_callback,
+        update_transport_provider_callback,
+        get_transport_provider_details_callback,
+        set_driver_transport_provider_affiliation_callback,
+        set_vehicle_transport_provider_affiliation_callback,
         assign_driver_callback,
         replace_driver_callback,
+        finish_driver_callback,
+        adopt_current_operational_assignment_callback,
+        replace_in_progress_operational_assignment_callback,
         start_freight_callback,
+        complete_freight_callback,
     ):
         self.master = master
         self.calculate_quote_callback = calculate_quote_callback
@@ -93,9 +104,38 @@ class MainMenu:
         self.search_vehicles_callback = search_vehicles_callback
         self.get_vehicle_callback = get_vehicle_callback
         self.update_vehicle_callback = update_vehicle_callback
+        self.create_transport_provider_callback = (
+            create_transport_provider_callback
+        )
+        self.search_transport_providers_callback = (
+            search_transport_providers_callback
+        )
+        self.get_transport_provider_callback = (
+            get_transport_provider_callback
+        )
+        self.update_transport_provider_callback = (
+            update_transport_provider_callback
+        )
+        self.get_transport_provider_details_callback = (
+            get_transport_provider_details_callback
+        )
+        self.set_driver_transport_provider_affiliation_callback = (
+            set_driver_transport_provider_affiliation_callback
+        )
+        self.set_vehicle_transport_provider_affiliation_callback = (
+            set_vehicle_transport_provider_affiliation_callback
+        )
         self.assign_driver_callback = assign_driver_callback
         self.replace_driver_callback = replace_driver_callback
+        self.finish_driver_callback = finish_driver_callback
+        self.adopt_current_operational_assignment_callback = (
+            adopt_current_operational_assignment_callback
+        )
+        self.replace_in_progress_operational_assignment_callback = (
+            replace_in_progress_operational_assignment_callback
+        )
         self.start_freight_callback = start_freight_callback
+        self.complete_freight_callback = complete_freight_callback
         self.is_dark_mode = False
 
         self.master.title("Sistema")
@@ -208,8 +248,8 @@ class MainMenu:
 
         ctk.CTkButton(
             self.catalog_submenu,
-            text="1 - Motoristas",
-            command=self.show_drivers,
+            text="2 - Veículos",
+            command=self.show_vehicles,
             fg_color=BUTTON_COLOR,
             text_color="white",
             font=BUTTON_FONT
@@ -221,8 +261,8 @@ class MainMenu:
 
         ctk.CTkButton(
             self.catalog_submenu,
-            text="2 - Veículos",
-            command=self.show_vehicles,
+            text="1 - Prestadores",
+            command=self.show_transport_providers,
             fg_color=BUTTON_COLOR,
             text_color="white",
             font=BUTTON_FONT
@@ -420,39 +460,35 @@ class MainMenu:
                 search_available_drivers_callback=(
                     self.search_available_drivers_callback
                 ),
+                search_transport_providers_callback=(
+                    self.search_transport_providers_callback
+                ),
+                get_transport_provider_details_callback=(
+                    self.get_transport_provider_details_callback
+                ),
                 assign_driver_callback=(
                     self.assign_driver_callback
                 ),
                 replace_driver_callback=(
                     self.replace_driver_callback
                 ),
+                finish_driver_callback=(
+                    self.finish_driver_callback
+                ),
+                adopt_current_operational_assignment_callback=(
+                    self.adopt_current_operational_assignment_callback
+                ),
+                replace_in_progress_operational_assignment_callback=(
+                    self.replace_in_progress_operational_assignment_callback
+                ),
                 start_freight_callback=(
                     self.start_freight_callback
                 ),
+                complete_freight_callback=(
+                    self.complete_freight_callback
+                ),
                 navigate_back=self.show_freights,
             )
-        )
-
-    def show_drivers(self):
-
-        self._hide_submenus()
-        self.clear_content()
-
-        self.current_driver_list_view = DriverListView(
-            parent=self.content,
-            list_drivers_callback=(
-                self.list_drivers_callback
-            ),
-            get_driver_callback=(
-                self.get_driver_callback
-            ),
-            create_driver_callback=(
-                self.create_driver_callback
-            ),
-            update_driver_callback=(
-                self.update_driver_callback
-            ),
-            navigate_back=self.show_home,
         )
 
     def show_vehicles(self):
@@ -475,6 +511,54 @@ class MainMenu:
                 self.update_vehicle_callback
             ),
             navigate_back=self.show_home,
+        )
+
+    def show_transport_providers(self):
+
+        self._hide_submenus()
+        self.clear_content()
+
+        self.current_transport_provider_list_view = (
+            TransportProviderListView(
+                parent=self.content,
+                search_transport_providers_callback=(
+                    self.search_transport_providers_callback
+                ),
+                get_transport_provider_callback=(
+                    self.get_transport_provider_callback
+                ),
+                create_transport_provider_callback=(
+                    self.create_transport_provider_callback
+                ),
+                update_transport_provider_callback=(
+                    self.update_transport_provider_callback
+                ),
+                get_transport_provider_details_callback=(
+                    self.get_transport_provider_details_callback
+                ),
+                set_driver_transport_provider_affiliation_callback=(
+                    self.set_driver_transport_provider_affiliation_callback
+                ),
+                set_vehicle_transport_provider_affiliation_callback=(
+                    self.set_vehicle_transport_provider_affiliation_callback
+                ),
+                create_driver_callback=(
+                    self.create_driver_callback
+                ),
+                get_driver_callback=(
+                    self.get_driver_callback
+                ),
+                update_driver_callback=(
+                    self.update_driver_callback
+                ),
+                list_drivers_callback=(
+                    self.list_drivers_callback
+                ),
+                search_vehicles_callback=(
+                    self.search_vehicles_callback
+                ),
+                navigate_back=self.show_home,
+            )
         )
 
     def show_documents(self):

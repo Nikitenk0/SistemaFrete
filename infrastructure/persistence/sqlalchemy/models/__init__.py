@@ -21,6 +21,9 @@ from infrastructure.persistence.sqlalchemy.models.freight import (
 from infrastructure.persistence.sqlalchemy.models.freight_expense import (
     FreightExpenseModel
 )
+from infrastructure.persistence.sqlalchemy.models.freight_operational_assignment import (
+    FreightOperationalAssignmentModel
+)
 from infrastructure.persistence.sqlalchemy.models.freight_financial_result import (
     FreightFinancialResultModel
 )
@@ -38,6 +41,11 @@ from infrastructure.persistence.sqlalchemy.models.user import (
 )
 from infrastructure.persistence.sqlalchemy.models.vehicle import (
     VehicleModel
+)
+from infrastructure.persistence.sqlalchemy.models.transport_provider import (
+    DriverTransportProviderAffiliationModel,
+    TransportProviderModel,
+    VehicleTransportProviderAffiliationModel
 )
 
 from infrastructure.persistence.sqlalchemy.models.pricing_policy import (
@@ -62,6 +70,7 @@ __all__ = (
     "FreightExpenseModel",
     "FreightFinancialResultModel",
     "FreightModel",
+    "FreightOperationalAssignmentModel",
     "FreightTransportUnitModel",
     "FreightVehicleRecordModel",
     "QuoteAdditionalModel",
@@ -73,6 +82,9 @@ __all__ = (
     "QuoteVersionModel",
     "UserModel",
     "VehicleModel",
+    "DriverTransportProviderAffiliationModel",
+    "TransportProviderModel",
+    "VehicleTransportProviderAffiliationModel",
     "AdministrativeCostPolicyModel",
     "MarginBandModel",
     "MarginTableModel",
